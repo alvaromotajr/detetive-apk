@@ -116,6 +116,7 @@
         if (msg.tipo === "remover_desconectado") return this._removerSumido(uid, msg);
         if (msg.tipo === "caderno") return this._caderno(uid, msg);
         if (msg.tipo === "chat") return this._chat(uid, msg);
+        if (msg.tipo === "cutucar") return this._cutucar(uid);
         if (msg.tipo === "tempo_vez") return this._configurar(uid, msg, "tempo");
         if (msg.tipo === "bots_velocidade") return this._configurar(uid, msg, "bots");
         if (msg.tipo === "revanche") return this._revanche(uid);
@@ -328,6 +329,19 @@
       for (const m of [...this.membros.values()]) if (m.saiu) this.membros.delete(m.nome);
       this.jogo = null; this.cadernos = {}; this.marcaVez = null; this._chaveVez = null; this.ultimos.clear();
       this._transmitirTudo();
+    }
+    /* Lembra quem está na vez de jogar (no máximo uma vez a cada 30 s por pessoa). */
+    _cutucar(uid) {
+      const m = this._doUid(uid);
+      if (!this.jogo || this.jogo.fase === "fim") throw new ErroJogo("A partida não está em andamento.");
+      const alvo = this.membros.get(this.jogo.jogadorDaVez);
+      if (!alvo || alvo.nome === m.nome) throw new ErroJogo("A vez é sua!");
+      if (alvo.bot) throw new ErroJogo("A vez é de um bot. Ele joga sozinho.");
+      this.cutucou = this.cutucou || new Map();
+      const falta = 30000 - (this.relogio() - (this.cutucou.get(uid) || -1e12));
+      if (falta > 0) throw new ErroJogo(`Espere ${Math.ceil(falta / 1000)}s para cutucar de novo.`);
+      this.cutucou.set(uid, this.relogio()); this.cutucaN = (this.cutucaN || 0) + 1;
+      this._enviar(alvo.uid, { tipo: "cutucada", de: m.nome, n: this.cutucaN });
     }
     _chat(uid, msg) {
       const m = this._doUid(uid), i = msg.i;

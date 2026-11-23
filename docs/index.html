@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0d0d0d">
+<meta name="theme-color" content="#0d0d0d" id="metatema">
 <title>Detetive</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icone-180.png">
@@ -11,7 +11,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Detetive">
 <style>
-:root{--bg:#0d0d0d;--p1:#1a1a1a;--p2:#262626;--p3:#3a3a3a;--tx:#e6e6e6;--mut:#9a9a9a;--red:#e24b4a;--ok:#c9c9c9}
+:root{--bg:#0d0d0d;--p1:#1a1a1a;--p2:#262626;--p3:#3a3a3a;--tx:#e6e6e6;--mut:#9a9a9a;--red:#e24b4a;--ok:#c9c9c9;--errbg:#3a1717;--errtx:#ffd0cf;--lembra:#5a1717;--pensar:#1f3558;--vista:#294b2a;--susp:#4a3f17}
+:root[data-tema="claro"]{--bg:#f4f0e6;--p1:#ffffff;--p2:#ece6d8;--p3:#cdc3ad;--tx:#1d1b16;--mut:#6a6455;--red:#c0392b;--ok:#2f2f2f;--errbg:#fde7e4;--errtx:#7a1f16;--lembra:#fbd0cb;--pensar:#d6e3ff;--vista:#cfeccb;--susp:#fff0b3}
+:root[data-tema="claro"] .lembra{color:#5a1717}
+.tut .cx{color:#e6e6e6}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 Georgia,"Times New Roman",serif}
 body{min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
@@ -29,7 +32,7 @@ button.ghost{background:transparent}
 button:disabled{opacity:.4}
 .row{display:flex;gap:8px}.row>*{flex:1}
 .stack>*{margin:6px 0;width:100%}
-.err{background:#3a1717;border:1px solid var(--red);color:#ffd0cf;border-radius:8px;padding:10px;margin:10px 0}
+.err{background:var(--errbg);border:1px solid var(--red);color:var(--errtx);border-radius:8px;padding:10px;margin:10px 0}
 .tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{flex:1;padding:10px 4px;min-height:42px}
 .tabs button.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
 .code{font-size:38px;letter-spacing:.3em;text-align:center;margin:6px 0;font-family:monospace}
@@ -54,14 +57,14 @@ button:disabled{opacity:.4}
 .nb .bts{display:flex;gap:6px}
 .nb button{padding:8px 8px;min-height:38px;font-size:12.5px}
 .nb{grid-template-columns:1fr}.nb .bts{flex-wrap:wrap}.nb .bts button{flex:1}
-.m-pensar{background:#1f3558;border-color:#5b8fd9}
-.m-vista{background:#294b2a;border-color:#4f9a52}.m-suspeita{background:#4a3f17;border-color:#c9a93b}
+.m-pensar{background:var(--pensar);border-color:#5b8fd9}
+.m-vista{background:var(--vista);border-color:#4f9a52}.m-suspeita{background:var(--susp);border-color:#c9a93b}
 .mapa{margin:10px 0 4px}.tabuleiro{width:100%;height:auto;display:block;border:1px solid var(--p3);border-radius:10px;background:#000}
 .tabuleiro .ir{cursor:pointer;animation:pisca 1.4s ease-in-out infinite}.peao{pointer-events:none}
 @keyframes pisca{50%{opacity:.6}}
 .leg{display:block;text-align:center;margin-bottom:6px}
 .pawn{font-size:13px;line-height:22px}
-.bar.minhavez{background:#3a1717;border:1px solid var(--red);border-radius:10px;padding:8px 12px}
+.bar.minhavez{background:var(--errbg);border:1px solid var(--red);border-radius:10px;padding:8px 12px}
 .jogada{border-color:var(--red)}.jogada .quem{font-size:17px;margin-bottom:8px}
 .trio{display:flex;flex-wrap:wrap;gap:6px}.trio span{background:var(--tx);color:var(--bg);border-radius:6px;padding:7px 10px;font-size:15px}
 .jogada .res p{margin:6px 0 0;font-size:14px}.jogada .res p.vi{color:var(--tx);font-size:15px}
@@ -77,7 +80,7 @@ a{color:var(--tx)}
 
 @keyframes gira{0%{transform:rotate(0) scale(1)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg) scale(1)}}
 .dados.rola span{display:inline-block;animation:gira .3s linear infinite}
-.lembra{background:#5a1717;border:2px solid var(--red);border-radius:10px;padding:10px;margin-bottom:10px;font-size:17px;text-align:center;animation:pisca 1s ease-in-out infinite}
+.lembra{background:var(--lembra);border:2px solid var(--red);border-radius:10px;padding:10px;margin-bottom:10px;font-size:17px;text-align:center;animation:pisca 1s ease-in-out infinite}
 button.pisca{animation:pisca .8s ease-in-out infinite}
 .cron{font:bold 15px/1 monospace;background:var(--p2);border:1px solid var(--p3);border-radius:6px;padding:3px 7px;margin-right:6px}.cron.pouco{background:#5a1717;border-color:var(--red);color:#fff}
 .tut{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.86);display:flex;align-items:center;justify-content:center;padding:18px}
@@ -133,10 +136,11 @@ table.res{width:100%;border-collapse:collapse;font-size:14px}table.res td,table.
 const $app = document.getElementById("app");
 const CORES = ["#e6e6e6","#e24b4a","#c9a93b","#7fb6d9","#8fc98f","#c28fd9","#e8a06a","#9a9a9a"];
 
-const S = { convite:null, tela:"login", aba:"entrar", erro:"", iniciando:true, juizOffline:false, conectado:false, nome:null,
+const VERSAO_WEB = "0.10.0";
+const S = { convite:null, ativa:null, querAbrir:false, fundo:false, cutucada:null, cutucouEm:0, tema:"escuro", juizSeg:0, tela:"login", aba:"entrar", erro:"", iniciando:true, juizOffline:false, conectado:false, nome:null,
   convidado:false, sala:null, jogo:null, caderno:{}, historico:null, cadernoAberto:false,
   atual:null, atualizando:false, pct:null, erroAtual:"", sel:{suspeito:null, arma:null}, acusando:false, acus:{suspeito:null, local:null, arma:null}, ultimoVi:0, vistoN:null, servico:false, vista3d:false, ang:45, elev:32, zoom:1, foco:null, alvo:null, painel:null, chatLido:0, chatVisto:null, som:true, noite:false, fixo:false, blefe:false, lembrando:false, rolando:0, anim:null, prazo:null, tut:null };
-try { S.vista3d = localStorage.getItem("detetive_3d") === "1"; S.som = localStorage.getItem("detetive_som") !== "0"; S.noite = localStorage.getItem("detetive_noite") === "1"; S.fixo = localStorage.getItem("detetive_fixo") === "1"; } catch(e){}
+try { S.vista3d = localStorage.getItem("detetive_3d") === "1"; S.som = localStorage.getItem("detetive_som") !== "0"; S.noite = localStorage.getItem("detetive_noite") === "1"; S.fixo = localStorage.getItem("detetive_fixo") === "1"; S.tema = localStorage.getItem("detetive_tema") || "escuro"; } catch(e){}
 
 function guardar(k, v){ try{ v==null ? localStorage.removeItem(k) : localStorage.setItem(k, v);}catch(e){} }
 function ler(k){ try{ return localStorage.getItem(k);}catch(e){ return null; } }
@@ -158,12 +162,49 @@ function conectar(){
     S.conectado = true; T.iniciar();
   } catch(e){ S.iniciando = false; S.erro = "Não foi possível iniciar o Firebase."; }
 }
+const GLOBAIS = ["criar_sala","entrar_sala","historico","registrar","entrar","convidado","retomar","sair_conta","ping"];
 function enviar(msg){
+  if (S.ativa && !msg._sala && !GLOBAIS.includes(msg.tipo)) msg = Object.assign({}, msg, {_sala:S.ativa});
   if (window.__enviarFalso) return window.__enviarFalso(JSON.stringify(msg));
   if (T) T.enviar(msg); else { S.erro = S.erro || "Ainda sem conexão."; desenhar(); }
 }
 
+/* ------------------------------------------- várias salas: cada sala tem a sua "fatia" de estado */
+const R = {};
+const FATIA = {sala:()=>null, jogo:()=>null, caderno:()=>({}), juizOffline:()=>false, juizSeg:()=>0, vistoN:()=>null, chatVisto:()=>null, chatLido:()=>0, prazo:()=>null, acusando:()=>false, alvo:()=>null, anim:()=>null, foco:()=>null, zoom:()=>1, painel:()=>null, cadernoAberto:()=>false, sel:()=>({suspeito:null, arma:null}), acus:()=>({suspeito:null, local:null, arma:null}), blefe:()=>false, lembrando:()=>false, cutucada:()=>null, cutucouEm:()=>0};
+function salvarFatia(){ if (!S.ativa) return; const f = R[S.ativa] || (R[S.ativa] = {}); for (const k in FATIA) f[k] = S[k]; }
+function carregarFatia(c){ const f = (c && R[c]) || {}; for (const k in FATIA) S[k] = (k in f) ? f[k] : FATIA[k](); }
+function telaDaSala(){ return S.sala ? (S.sala.iniciada ? "jogo" : "lobby") : "menu"; }
+function abrirSala(c){
+  if (!R[c]) return; salvarFatia(); S.ativa = c; carregarFatia(c); S.tela = telaDaSala(); S.erro = ""; S.querAbrir = false; S.prazo = S.sala && S.sala.restam != null ? Date.now() + S.sala.restam * 1000 : S.prazo;
+  agendarLembrete(); desenhar();
+}
+function irInicio(){ salvarFatia(); S.ativa = null; carregarFatia(null); S.tela = "menu"; S.erro = ""; desenhar(); }
+function sairDaSala(c, confirmar){
+  const f = R[c], dono = f && f.sala && f.sala.anfitriao === S.nome;
+  if (confirmar && !confirm(dono ? "Você é o anfitrião. Sair encerra a partida para todos. Continuar?" : "Sair da sala? Você não poderá voltar.")) return;
+  enviar({tipo:"sair_sala", _sala:c});
+}
+function pedirAbrir(){ S.querAbrir = true; S.erro = ""; }
 function receber(m){
+  const c = m.__sala;
+  if (c && m.tipo === "erro" && !(c in R)) { S.querAbrir = false; aplicar(m); desenhar(); return; }
+  if (!c) { if (m.tipo === "erro") S.querAbrir = false; aplicar(m); if (m.tipo === "deslogado"){ for (const k in R) delete R[k]; S.ativa = null; carregarFatia(null); servicoPartida(false); } desenhar(); return; }
+  if (m.tipo === "abrir_sala"){ abrirSala(c); return; }
+  if (m.tipo === "saiu_da_sala"){
+    const eraAtiva = c === S.ativa; delete R[c];
+    if (eraAtiva){ S.ativa = null; carregarFatia(null); S.tela = "menu"; }
+    S.erro = m.motivo ? (eraAtiva ? "" : `Sala ${c}: `) + m.motivo : ""; servicoPartida(Object.keys(R).length > 0); desenhar(); return;
+  }
+  const nova = !(c in R); if (nova) R[c] = {};
+  if (c === S.ativa){ aplicar(m); desenhar(); return; }
+  const guarda = {tela:S.tela, erro:S.erro, ativa:S.ativa};
+  salvarFatia(); S.ativa = c; carregarFatia(c); S.fundo = true;
+  try { aplicar(m); } finally { salvarFatia(); S.fundo = false; S.ativa = guarda.ativa; carregarFatia(S.ativa); S.tela = guarda.tela; S.erro = guarda.erro; }
+  if (nova && S.querAbrir && m.tipo === "sala"){ abrirSala(c); return; }
+  desenhar();
+}
+function aplicar(m){
   switch(m.tipo){
     case "autenticado":
       S.iniciando = false; S.nome = m.nome; S.convidado = m.convidado; S.erro = "";
@@ -174,23 +215,23 @@ function receber(m){
       S.tela = "login"; S.cadernoAberto = false; S.juizOffline = false; S.vistoN = null; servicoPartida(false); break;
     case "juiz_offline": S.juizOffline = !!m.offline; S.juizSeg = m.segundos || 0; break;
     case "erro": S.erro = m.mensagem; break;
+    case "cutucada":
+      S.cutucada = {de:m.de, t:Date.now()}; avisar("vez", "🔔 " + m.de + " te cutucou", "É a sua vez de jogar!");
+      if (!S.fundo){ Som.lembrete(); vibrar(); }
+      break;
     case "sala":
       novidadesChat(m);
-      S.sala = m; S.erro = ""; servicoPartida(true);
+      S.sala = m; if (!S.fundo) S.erro = ""; servicoPartida(true);
       S.prazo = m.restam != null ? Date.now() + m.restam * 1000 : null;
       if (!m.iniciada){ S.jogo = null; S.caderno = {}; S.vistoN = null; S.acusando = false; S.alvo = null; S.anim = null; S.foco = null; S.zoom = 1; }
       S.tela = m.iniciada ? "jogo" : "lobby"; break;
     case "jogo":
-      processarNovidades(m.visao); S.jogo = m.visao; S.tela = "jogo"; agendarLembrete();
-      if (S.tut == null && ler("detetive_tut") !== "1") S.tut = 0;
+      processarNovidades(m.visao); S.jogo = m.visao; S.tela = "jogo"; if (!S.fundo) agendarLembrete();
+      if (!S.fundo && S.tut == null && ler("detetive_tut") !== "1") S.tut = 0;
       break;
     case "caderno": S.caderno = m.marcas || {}; break;
     case "historico": S.historico = m.partidas; break;
-    case "saiu_da_sala":
-      S.sala = S.jogo = null; S.caderno = {}; S.tela = "menu"; S.cadernoAberto = false; S.painel = null; S.chatVisto = null; S.chatLido = 0; S.foco = null; S.zoom = 1; S.alvo = null; S.juizOffline = false; S.vistoN = null; servicoPartida(false);
-      S.erro = m.motivo || ""; break;
   }
-  desenhar();
 }
 
 
@@ -229,9 +270,9 @@ function novidadesChat(m){
   if (S.painel === "chat") S.chatLido = maxN;
   if (novas.length){ const u = novas[novas.length - 1]; avisar("jogada", `💬 ${u.de}`, (m.frases || [])[u.i] || ""); Som.chat(); }
 }
-function avisar(tipo, titulo, texto){ try { if (window.AndroidApp && window.AndroidApp.notificar) window.AndroidApp.notificar(tipo, titulo, texto); } catch(e){} }
+function avisar(tipo, titulo, texto){ if (Object.keys(R).length > 1 && S.ativa) titulo += " · " + S.ativa; try { if (window.AndroidApp && window.AndroidApp.notificar) window.AndroidApp.notificar(tipo, titulo, texto); } catch(e){} }
 function vibrar(){ try { if (navigator.vibrate) navigator.vibrate([120, 80, 120]); } catch(e){} }
-function criarSalaBateria(){ try { if (window.AndroidApp && window.AndroidApp.pedirBateria) window.AndroidApp.pedirBateria(); } catch(e){} enviar({tipo:'criar_sala'}); }
+function criarSalaBateria(){ pedirAbrir(); try { if (window.AndroidApp && window.AndroidApp.pedirBateria) window.AndroidApp.pedirBateria(); } catch(e){} enviar({tipo:'criar_sala'}); }
 function servicoPartida(ativo){
   if (S.servico === ativo) return; S.servico = ativo;
   try { if (window.AndroidApp && window.AndroidApp.partida) window.AndroidApp.partida(ativo); } catch(e){}
@@ -270,7 +311,7 @@ function processarNovidades(v){
 
 /* ------------------------------------------------------------ telas */
 function desenhar(){
-  const f = {login, menu, lobby, jogo}[S.tela] || login;
+  const f = {login, menu, config, lobby, jogo}[S.tela] || login;
   const foco = document.activeElement && document.activeElement.id;
   const valores = {};
   document.querySelectorAll("input").forEach(i => valores[i.id] = i.value);
@@ -294,25 +335,73 @@ function login(){
      <input id="senha" type="password" placeholder="Senha" maxlength="72" autocomplete="${a==="entrar"?"current-password":"new-password"}">
      <button class="main" onclick="${a==="entrar"?"entrarConta()":"cadastrar()"}">${a==="entrar"?"Entrar":"Criar conta"}</button>`}
   </div>
-  <p style="text-align:center"><small>${window.AndroidApp?`v${esc(window.AndroidApp.versao())}`:""}</small></p>`;
+  ${rodapeVersao()}`;
 }
 function avisoConvite(){
   return S.convite ? `<div class="card" style="border-color:var(--red)"><b>🔎 Convite para a sala ${esc(S.convite)}</b><button class="main" style="width:100%;margin-top:8px" onclick="entrarConvite()">🚪 Entrar na sala ${esc(S.convite)}</button></div>` : "";
 }
-function entrarConvite(){ const c = S.convite; S.convite = null; S.erro = ""; enviar({tipo:"entrar_sala", codigo:c}); }
+function entrarConvite(){ const c = S.convite; S.convite = null; pedirAbrir(); enviar({tipo:"entrar_sala", codigo:c}); }
 function lerConvite(c){ c = String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6); if (c.length >= 4){ S.convite = c; desenhar(); } }
 window.__verConvite = () => { try { if (window.AndroidApp && window.AndroidApp.convite) lerConvite(window.AndroidApp.convite()); } catch(e){} };
+const MAX_SALAS = 3;
+const versaoTexto = () => { try { if (window.AndroidApp && window.AndroidApp.versao) return "Versão " + window.AndroidApp.versao(); } catch(e){} return "Versão " + VERSAO_WEB + " (navegador)"; };
+const rodapeVersao = () => `<p style="text-align:center;margin:18px 0 4px"><small>${esc(versaoTexto())}</small></p>`;
+function statusDaSala(f){
+  const s = f.sala, v = f.jogo;
+  if (!s) return "Entrando…";
+  if (!s.iniciada) return `Esperando jogadores (${s.jogadores.length}/${s.maximo})`;
+  if (!v) return "Em andamento";
+  if (v.fase === "fim") return v.vencedor ? `Terminou · ${v.vencedor} venceu` : "Terminou";
+  return v.vez_de === v.voce ? "🎯 Sua vez!" : `Vez de ${v.vez_de}`;
+}
+const ehMinhaVez = f => !!(f.jogo && f.jogo.fase !== "fim" && f.jogo.vez_de === f.jogo.voce);
+function cartaoSala(c){
+  const f = R[c], dono = f.sala && f.sala.anfitriao === S.nome, off = f.juizOffline;
+  return `<div class="card" style="${ehMinhaVez(f) ? "border-color:var(--red);border-width:2px" : ""}">
+    <div class="pl" style="border:0;padding:0"><b style="font-family:monospace;font-size:22px;letter-spacing:.15em">${esc(c)}</b><span>${dono ? '<span class="tag">👑 anfitrião</span>' : ""}${off ? '<span class="tag">⚠ sem sinal</span>' : ""}</span></div>
+    <p style="margin:6px 0 10px">${esc(statusDaSala(f))}${f.sala && f.sala.cenario ? `<br><small>${esc(f.sala.cenario)}</small>` : ""}</p>
+    <div class="row"><button class="main" onclick="abrirSala('${esc(c)}')">Abrir</button><button class="ghost" onclick="sairDaSala('${esc(c)}', true)">Sair</button></div></div>`;
+}
 function menu(){
-  return `<h1>Olá, ${esc(S.nome)}</h1><p class="sub">${S.convidado?"Jogando como convidado":"Detetive registrado"}</p>
+  const cods = Object.keys(R).sort((a, b) => (ehMinhaVez(R[b]) - ehMinhaVez(R[a])) || a.localeCompare(b)), cheio = cods.length >= MAX_SALAS;
+  return `<div class="bar"><span></span><h1 style="margin:8px 0 2px">Detetive</h1><button class="ghost somb" onclick="abrirConfig()" aria-label="Configurações">⚙️</button></div>
+  <p class="sub">Olá, ${esc(S.nome)} · ${S.convidado?"convidado":"registrado"}</p>
   ${avisoConvite()}
-  ${ler("detetive_sala")?`<div class="card" style="border-color:var(--red)"><b>Você estava em uma partida</b><button class="main" style="width:100%;margin-top:8px" onclick="enviar({tipo:'retomar'})">↩ Voltar à partida</button></div>`:""}
-  <div class="card stack"><button class="main" onclick="criarSalaBateria()">Criar sala</button>
-  <input id="codigo" placeholder="Código da sala" maxlength="6" autocapitalize="characters" style="text-align:center;letter-spacing:.2em;text-transform:uppercase">
-  <button onclick="entrarSala()">Entrar na sala</button></div>
+  <h2>Minhas salas (${cods.length}/${MAX_SALAS})</h2>
+  ${cods.length ? cods.map(cartaoSala).join("") : `<div class="card"><small>Você não está em nenhuma sala. Crie uma ou entre com um código.</small></div>`}
+  ${S.querAbrir ? `<div class="card"><small>⏳ Abrindo a sala…</small></div>` : ""}
+  <h2>Nova sala</h2>
+  <div class="card stack"><button class="main" ${cheio?"disabled":""} onclick="criarSalaBateria()">➕ Criar sala</button>
+  <input id="codigo" placeholder="Código da sala" maxlength="6" autocapitalize="characters" style="text-align:center;letter-spacing:.2em;text-transform:uppercase" ${cheio?"disabled":""}>
+  <button ${cheio?"disabled":""} onclick="entrarSala()">Entrar na sala</button>
+  ${cheio?`<small>Limite de ${MAX_SALAS} salas ao mesmo tempo. Saia de uma para abrir outra.</small>`:""}</div>
   ${S.convidado ? "" : `<button class="ghost" style="width:100%" onclick="enviar({tipo:'historico'})">📊 Minhas estatísticas</button>`}
   ${S.historico ? estatisticas(S.historico) : ""}
   <button class="ghost" style="width:100%;margin-top:12px" onclick="abrirTutorial()">❓ Como jogar</button>
-  <button class="ghost" style="width:100%;margin-top:12px" onclick="sair()">Sair da conta</button>`;
+  ${rodapeVersao()}`;
+}
+function abrirConfig(){ S.tela = "config"; S.erro = ""; desenhar(); }
+function fecharConfig(){ S.tela = "menu"; desenhar(); }
+function escolherTema(t){ S.tema = t; guardar("detetive_tema", t); aplicarTema(); desenhar(); }
+function aplicarTema(){
+  let claro = S.tema === "claro";
+  if (S.tema === "auto"){ try { claro = window.matchMedia("(prefers-color-scheme: light)").matches; } catch(e){} }
+  document.documentElement.dataset.tema = claro ? "claro" : "escuro";
+  const m = document.getElementById("metatema"); if (m) m.content = claro ? "#f4f0e6" : "#0d0d0d";
+}
+try { window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { if (S.tema === "auto") aplicarTema(); }); } catch(e){}
+function config(){
+  const t = S.tema;
+  return `<div class="bar"><button class="ghost somb" onclick="fecharConfig()" aria-label="Voltar">←</button><h1 style="margin:8px 0 2px">Configurações</h1><span style="width:44px"></span></div>
+  <h2>Tema</h2><div class="card"><div class="opt">
+    <button class="${t==="escuro"?"on":""}" onclick="escolherTema('escuro')">🌙 Escuro</button>
+    <button class="${t==="claro"?"on":""}" onclick="escolherTema('claro')">☀️ Claro</button>
+    <button class="${t==="auto"?"on":""}" onclick="escolherTema('auto')">📱 Automático</button></div>
+    <small>Automático segue o tema do celular.</small></div>
+  <h2>Som</h2><div class="card"><button style="width:100%" onclick="alternarSom()">${S.som ? "🔊 Som ligado" : "🔇 Som desligado"}</button></div>
+  <h2>Ajuda</h2><div class="card stack"><button onclick="abrirTutorial()">❓ Ver o tutorial</button></div>
+  <h2>Conta</h2><div class="card stack"><small>Entrou como <b>${esc(S.nome)}</b></small><button class="ghost" onclick="if(confirm('Sair da conta? Você sai de todas as salas.'))sair()">Sair da conta</button></div>
+  ${rodapeVersao()}`;
 }
 function estatisticas(h){
   if (!h.length) return `<div class="card"><small>Nenhuma partida ainda. Jogue uma e volte aqui!</small></div>`;
@@ -342,11 +431,19 @@ function configSala(s){
 }
 function definirTempo(){ const m = parseInt(val("minutos"), 10); if (!(m >= 1 && m <= 30)){ S.erro = "Digite de 1 a 30 minutos."; desenhar(); return; } S.erro = ""; enviar({tipo:"tempo_vez", minutos:m}); }
 const velocidadeBots = s => `<div class="card"><small>🤖 Velocidade dos bots</small><div class="opt"><button class="${s.bots_vel==="rapido"?"on":""}" onclick="enviar({tipo:'bots_velocidade',v:'rapido'})">⚡ Rápido</button><button class="${s.bots_vel==="lento"?"on":""}" onclick="enviar({tipo:'bots_velocidade',v:'lento'})">🐢 Lento</button></div></div>`;
+const linkConvite = c => `https://alvaromotajr.github.io/detetive-apk/convite.html?sala=${c}`;
+function copiarTexto(txt, aviso){
+  let ok = false;
+  try { if (window.AndroidApp && typeof window.AndroidApp.copiar === "function"){ window.AndroidApp.copiar(txt); ok = true; } } catch(e){}
+  if (!ok){ try { navigator.clipboard.writeText(txt); ok = true; } catch(e){} }
+  S.erro = ok ? aviso : "Não consegui copiar. Anote: " + txt; desenhar();
+}
+const copiarCodigo = () => copiarTexto(S.sala.codigo, "Código copiado: " + S.sala.codigo);
+const copiarLink = () => copiarTexto(linkConvite(S.sala.codigo), "Link copiado. Cole no WhatsApp.");
 function convidarWhats(){
-  const codigo = S.sala.codigo, txt = `Vem jogar Detetive comigo! 🔎\nCódigo da sala: ${codigo}\n\n👉 Toque para entrar ou baixar o app (Android e iPhone):\nhttps://alvaromotajr.github.io/detetive_game/convite.html?sala=${codigo}`;
+  const codigo = S.sala.codigo, txt = `🔎 Vem jogar Detetive comigo!\n\nCódigo da sala:\n\`\`\`${codigo}\`\`\`\n\nToque no link para entrar ou baixar o app (Android e iPhone):\n${linkConvite(codigo)}`;
   try { if (window.AndroidApp && typeof window.AndroidApp.compartilhar === "function"){ window.AndroidApp.compartilhar(txt); return; } } catch(e){}
-  try { navigator.clipboard.writeText(txt); S.erro = "Convite copiado. Cole no WhatsApp."; } catch(e){ S.erro = "Código da sala: " + codigo; }
-  desenhar();
+  copiarTexto(txt, "Convite copiado. Cole no WhatsApp.");
 }
 function lobby(){
   const s = S.sala, souDono = s.anfitriao === S.nome, n = s.jogadores.length;
@@ -357,11 +454,12 @@ function lobby(){
   <h2>Jogadores (${n}/${s.maximo})</h2><div class="card">${s.jogadores.map(j=>`<div class="pl"><span><span class="dot ${j.conectado?"":"off"}"></span>${esc(j.nome)}${j.nome===s.anfitriao?'<span class="tag">anfitrião</span>':""}${j.bot?'<span class="tag">bot</span>':""}</span>${souDono&&j.bot?`<button class="ghost" style="padding:4px 10px" onclick="enviar({tipo:'remover_bot',nome:'${esc(j.nome)}'})">remover</button>`:""}</div>`).join("")}</div>
   ${souDono&&n<s.maximo?`<button class="ghost" style="width:100%;margin-bottom:10px" onclick="enviar({tipo:'add_bot'})">+ Adicionar bot (para testar sozinho)</button>`:""}
   ${souDono?configSala(s):`<small>⏱ Tempo da vez: ${s.tempo_vez?s.tempo_vez+" min":"sem tempo"}</small>`}
-  <button class="ghost" style="width:100%;margin:10px 0" onclick="convidarWhats()">📲 Convidar pelo WhatsApp</button>
+  <button class="ghost" style="width:100%;margin:10px 0 6px" onclick="convidarWhats()">📲 Convidar pelo WhatsApp</button>
+  <div class="row" style="margin-bottom:10px"><button class="ghost" onclick="copiarCodigo()">📋 Copiar código</button><button class="ghost" onclick="copiarLink()">🔗 Copiar link</button></div>
   ${souDono ? `<button class="main" style="width:100%" ${n<s.minimo?"disabled":""} onclick="enviar({tipo:'iniciar'})">Começar o caso</button>${n<s.minimo?`<small>Precisa de pelo menos ${s.minimo} jogadores.</small>`:""}` : `<p class="sub">Aguardando ${esc(s.anfitriao)} começar…</p>`}
   ${souDono ? `<p><small>Você é o anfitrião: ele cuida das regras. Mantenha o app aberto durante a partida.</small></p>` : ""}
   <div class="row" style="margin-top:10px">${botaoPainel("chat","💬 Chat")}${botaoSom()}</div>
-  <button class="ghost" style="width:100%;margin-top:10px" onclick="enviar({tipo:'sair_sala'})">Sair da sala</button>`;
+  <div class="row" style="margin-top:10px"><button class="ghost" onclick="irInicio()">🏠 Início</button><button class="ghost" onclick="sairDaSala(S.ativa,true)">Sair da sala</button></div>`;
 }
 
 function textoEvento(e){
@@ -737,11 +835,13 @@ function jogo(){
     .map(x=>`<p class="${x.e.tipo==="carta_revelada"||x.e.tipo==="carta_que_mostrei"?"eu":""}">${esc(x.t)}</p>`).join("");
   const meuPeao = eu ? `${emojiDe(s, eu.personagem)} ${esc(eu.personagem)}` : "";
 
-  return painel() + avisoJuiz() + `<div class="bar ${euVez&&!eliminado?"minhavez":""}"><div class="vez">${euVez&&!eliminado?"🎯 <b>Sua vez!</b>":`Vez de <b>${esc(v.vez_de)}</b>`}</div><small>${S.prazo?`<span class="cron ${restamS()<=15?"pouco":""}" id="cron">⏱ ${fmtTempo(restamS())}</span>`:""}${v.dados&&["mover","palpite","pos_palpite","refutando"].includes(v.fase)?`🎲 ${v.dados[0]} + ${v.dados[1]} · `:""}Sala ${esc(s.codigo)}</small><button class="ghost somb" onclick="abrirTutorial()" aria-label="Como jogar">❓</button></div>
+  return painel() + avisoJuiz() + `<div class="bar ${euVez&&!eliminado?"minhavez":""}"><div class="vez">${euVez&&!eliminado?"🎯 <b>Sua vez!</b>":`Vez de <b>${esc(v.vez_de)}</b>`}</div><small>${S.prazo?`<span class="cron ${restamS()<=15?"pouco":""}" id="cron">⏱ ${fmtTempo(restamS())}</span>`:""}${v.dados&&["mover","palpite","pos_palpite","refutando"].includes(v.fase)?`🎲 ${v.dados[0]} + ${v.dados[1]} · `:""}Sala ${esc(s.codigo)}</small><button class="ghost somb" onclick="irInicio()" aria-label="Início">🏠</button><button class="ghost somb" onclick="abrirTutorial()" aria-label="Como jogar">❓</button></div>
+  ${S.cutucada && Date.now() - S.cutucada.t < 12000 ? `<div class="lembra">🔔 ${esc(S.cutucada.de)} está te cutucando: é a sua vez!</div>` : ""}
+  ${botaoCutucar(v, s, euVez, eliminado)}
   <small>Você é ${meuPeao}</small>
   ${ultimaJogada(v, s)}
   ${botaoVista()}<div class="mapa" data-rot>${desenhoTabuleiro(s, v)}</div>
-  <small class="leg"><span style="color:#f2f2f2">→ entrada</span> · <span style="color:var(--red)">→ saída</span> · 🕳️ passagem secreta</small>
+  <small class="leg"><span style="color:var(--tx)">→ entrada</span> · <span style="color:var(--red)">→ saída</span> · 🕳️ passagem secreta</small>
   <div class="card">${acao}</div>
   <h2>Suas cartas</h2><div class="cartas">${cartas}</div>
   <div class="row" style="margin-top:12px">${botaoPainel("caderno","📓 Caderno")}${botaoPainel("chat","💬 Chat")}${botaoPainel("palpites","🔎 Palpites")}</div>
@@ -839,11 +939,17 @@ function fimDeJogo(){
     <table class="res"><tr><th>Jogador</th><th>Palpites</th><th>Cartas mostradas</th><th>Resultado</th></tr>${linhas}</table></div>
   ${souDono ? `<button class="main" style="width:100%;margin-bottom:8px" onclick="enviar({tipo:'revanche'})">🔁 Jogar de novo (revanche)</button>` : `<p class="sub">Se ${esc(s.anfitriao)} quiser, a revanche começa aqui.</p>`}
   <div class="row" style="margin-bottom:8px">${botaoPainel("chat","💬 Chat")}${botaoPainel("palpites","🔎 Palpites")}</div>
-  <button class="ghost" style="width:100%" onclick="enviar({tipo:'sair_sala'})">Voltar ao menu</button></div>`;
+  <div class="row"><button class="ghost" onclick="irInicio()">🏠 Início</button><button class="ghost" onclick="sairDaSala(S.ativa,false)">Sair da sala</button></div></div>`;
 }
 
 /* ------------------------------------------- lembrete de encerrar a jogada */
 let lembreteTimer = null, lembreteChave = "";
+function botaoCutucar(v, s, euVez, eliminado){
+  if (euVez || eliminado || v.fase === "fim") return "";
+  const alvo = (s.jogadores || []).find(j => j.nome === v.vez_de); if (!alvo || alvo.bot) return "";
+  const espera = Date.now() - S.cutucouEm < 30000;
+  return `<button class="ghost" style="width:100%;margin:6px 0" ${espera?"disabled":""} onclick="cutucar()">${espera ? "✓ Cutucada enviada" : "🔔 Cutucar " + esc(v.vez_de)}</button>`;
+}
 function agendarLembrete(){
   const v = S.jogo, ativo = !!v && v.vez_de === v.voce && v.fase === "pos_palpite", chave = ativo ? v.eventos.length + ":" + v.fase : "";
   if (chave === lembreteChave) return;
@@ -899,11 +1005,12 @@ function aba(a){ S.aba = a; S.erro = ""; desenhar(); }
 function entrarConta(){ S.erro=""; enviar({tipo:"entrar", usuario:val("usuario"), senha:val("senha")}); }
 function cadastrar(){ S.erro=""; enviar({tipo:"registrar", usuario:val("usuario"), senha:val("senha")}); }
 function entrarConvidado(){ S.erro=""; enviar({tipo:"convidado", apelido:val("apelido")}); }
-function entrarSala(){ S.erro=""; enviar({tipo:"entrar_sala", codigo:val("codigo")}); }
+function entrarSala(){ pedirAbrir(); enviar({tipo:"entrar_sala", codigo:val("codigo")}); }
 function sair(){ S.erro = ""; enviar({tipo:"sair_conta"}); }
 function mover(d){ S.erro=""; S.alvo=null; enviar({tipo:"mover", destino:d}); }
 function sel(campo, c){ S.sel[campo]=c; desenhar(); }
 function assumir(){ if (!confirm("Assumir a partida? Seu celular passa a ser o juiz e precisa ficar com o app aberto.")) return; enviar({tipo:"assumir"}); }
+function cutucar(){ S.cutucouEm = Date.now(); enviar({tipo:"cutucar"}); setTimeout(desenhar, 30500); desenhar(); }
 function palpitar(){ enviar({tipo:"palpitar", suspeito:S.sel.suspeito, arma:S.sel.arma}); S.sel={suspeito:null,arma:null}; S.blefe=false; }
 function acusar(){
   const a = S.acus;
@@ -920,9 +1027,9 @@ function marcar(c, m){
 }
 
 window.__receberDoServidor = m => receber(typeof m === "string" ? JSON.parse(m) : m);
-document.addEventListener("visibilitychange", () => { if (!document.hidden && T && S.nome && !S.sala) T.enviar({tipo:"retomar"}); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && T && S.nome) T.enviar({tipo:"retomar"}); });
 try { lerConvite(new URLSearchParams(location.search).get('sala')); } catch(e){}
-conectar(); desenhar(); window.__verConvite();
+aplicarTema(); conectar(); desenhar(); window.__verConvite();
 if (window.AndroidApp) { try { window.AndroidApp.verificar(); } catch(e){} }
 </script>
 </body>
