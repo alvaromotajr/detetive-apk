@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d">
+<title>Detetive</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Detetive">
+<style>
+:root{--bg:#0d0d0d;--p1:#1a1a1a;--p2:#262626;--p3:#3a3a3a;--tx:#e6e6e6;--mut:#9a9a9a;--red:#e24b4a;--ok:#c9c9c9}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 Georgia,"Times New Roman",serif}
+body{min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#app{max-width:480px;margin:0 auto;padding:16px}
+h1{font-size:26px;letter-spacing:.04em;margin:8px 0 2px;text-align:center}
+h2{font-size:18px;margin:18px 0 8px;font-weight:normal;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.sub{text-align:center;color:var(--mut);margin:0 0 20px;font-style:italic}
+.card{background:var(--p1);border:1px solid var(--p3);border-radius:10px;padding:14px;margin:12px 0}
+input{width:100%;background:var(--p2);color:var(--tx);border:1px solid var(--p3);border-radius:8px;padding:13px;font:inherit;margin:6px 0}
+input:focus{outline:2px solid var(--red)}
+button{font:inherit;background:var(--p2);color:var(--tx);border:1px solid var(--p3);border-radius:8px;padding:13px 16px;min-height:48px;cursor:pointer}
+button:active{transform:scale(.98)}
+button.main{background:var(--red);border-color:var(--red);color:#fff;font-weight:bold}
+button.ghost{background:transparent}
+button:disabled{opacity:.4}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.stack>*{margin:6px 0;width:100%}
+.err{background:#3a1717;border:1px solid var(--red);color:#ffd0cf;border-radius:8px;padding:10px;margin:10px 0}
+.tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{flex:1;padding:10px 4px;min-height:42px}
+.tabs button.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.code{font-size:38px;letter-spacing:.3em;text-align:center;margin:6px 0;font-family:monospace}
+.pl{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--p2)}
+.pl:last-child{border:0}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ok);margin-right:8px}
+.dot.off{background:var(--p3)}
+.tag{font-size:12px;color:var(--mut);border:1px solid var(--p3);border-radius:20px;padding:2px 8px;margin-left:6px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.vez{font-size:18px}.vez b{color:var(--red)}
+.pawn{width:22px;height:22px;border-radius:50%;font:bold 12px/22px sans-serif;text-align:center;color:#0d0d0d;border:1px solid #000}
+.pawn.eu{outline:2px solid var(--red)}.pawn.out{opacity:.35}
+.cartas{display:flex;flex-wrap:wrap;gap:6px}
+.carta{background:var(--tx);color:var(--bg);border-radius:6px;padding:7px 10px;font-size:14px}
+.minha{background:#f5c542;color:#222;border-radius:5px;padding:1px 5px;font-size:11px;font-weight:700;margin-left:4px}
+.carta.pub{background:var(--p3);color:var(--tx)}
+.carta.sel{outline:3px solid var(--red)}
+.log{max-height:170px;overflow:auto;font-size:14px;color:var(--mut)}
+.log p{margin:4px 0}.log p.eu{color:var(--tx)}
+.opt{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.opt button{padding:9px 11px;min-height:40px;font-size:14px}.opt button.on{background:var(--tx);color:var(--bg)}
+.nb{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--p2)}
+.nb .bts{display:flex;gap:6px}
+.nb button{padding:8px 8px;min-height:38px;font-size:12.5px}
+.nb{grid-template-columns:1fr}.nb .bts{flex-wrap:wrap}.nb .bts button{flex:1}
+.m-pensar{background:#1f3558;border-color:#5b8fd9}
+.m-vista{background:#294b2a;border-color:#4f9a52}.m-suspeita{background:#4a3f17;border-color:#c9a93b}
+.mapa{margin:10px 0 4px}.tabuleiro{width:100%;height:auto;display:block;border:1px solid var(--p3);border-radius:10px;background:#000}
+.tabuleiro .ir{cursor:pointer;animation:pisca 1.4s ease-in-out infinite}.peao{pointer-events:none}
+@keyframes pisca{50%{opacity:.6}}
+.leg{display:block;text-align:center;margin-bottom:6px}
+.pawn{font-size:13px;line-height:22px}
+.bar.minhavez{background:#3a1717;border:1px solid var(--red);border-radius:10px;padding:8px 12px}
+.jogada{border-color:var(--red)}.jogada .quem{font-size:17px;margin-bottom:8px}
+.trio{display:flex;flex-wrap:wrap;gap:6px}.trio span{background:var(--tx);color:var(--bg);border-radius:6px;padding:7px 10px;font-size:15px}
+.jogada .res p{margin:6px 0 0;font-size:14px}.jogada .res p.vi{color:var(--tx);font-size:15px}
+.pre{margin:8px 0}
+.iso{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+[data-rot]{touch-action:none}
+.vista{gap:8px}
+.vista{display:flex;justify-content:flex-end;margin-top:8px}.vista button{min-height:34px;padding:4px 12px;font-size:13px;width:auto}
+.dados{display:flex;align-items:center;gap:10px;margin-bottom:6px}.dados span{font-size:54px;line-height:1;color:var(--tx)}.dados b{font-size:18px}
+.fim{text-align:center}.fim .big{font-size:24px;margin:8px 0}
+small{color:var(--mut)}
+a{color:var(--tx)}
+
+@keyframes gira{0%{transform:rotate(0) scale(1)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg) scale(1)}}
+.dados.rola span{display:inline-block;animation:gira .3s linear infinite}
+.lembra{background:#5a1717;border:2px solid var(--red);border-radius:10px;padding:10px;margin-bottom:10px;font-size:17px;text-align:center;animation:pisca 1s ease-in-out infinite}
+button.pisca{animation:pisca .8s ease-in-out infinite}
+.cron{font:bold 15px/1 monospace;background:var(--p2);border:1px solid var(--p3);border-radius:6px;padding:3px 7px;margin-right:6px}.cron.pouco{background:#5a1717;border-color:var(--red);color:#fff}
+.tut{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.86);display:flex;align-items:center;justify-content:center;padding:18px}
+.tut .cx{background:#14181f;border:2px solid #7fb6d9;border-radius:14px;max-width:420px;width:100%;padding:20px;text-align:center}
+.tut .ic{font-size:54px;line-height:1}.tut h2{color:#7fb6d9;opacity:1;margin:10px 0}.tut p{font-size:18px;margin:8px 0 16px}
+.tut .pts{display:flex;justify-content:center;gap:6px;margin:10px 0}.tut .pts i{width:9px;height:9px;border-radius:50%;background:var(--p3)}.tut .pts i.on{background:#7fb6d9}
+.est{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.est div{background:var(--p2);border-radius:8px;padding:10px;text-align:center}.est b{display:block;font-size:24px}
+table.res{width:100%;border-collapse:collapse;font-size:14px}table.res td,table.res th{padding:6px 4px;border-bottom:1px solid var(--p2);text-align:center}table.res td:first-child,table.res th:first-child{text-align:left}
+.pbtn{position:relative}.pbtn .nv{position:absolute;top:-6px;right:-4px;background:var(--red);color:#fff;border-radius:10px;min-width:20px;height:20px;font:bold 12px/20px sans-serif;text-align:center;padding:0 5px}
+.painel{position:fixed;inset:0;z-index:50;overflow:auto;-webkit-overflow-scrolling:touch}
+.painel .in{max-width:480px;margin:0 auto;padding:0 16px 40px}
+.pnav{position:sticky;top:0;z-index:2;display:flex;gap:6px;align-items:center;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;margin:0 -16px 12px}
+.pnav button{flex:1;min-height:44px;padding:8px 4px;font-size:15px}.pnav .x{flex:0 0 auto;padding:8px 14px;font-weight:bold}
+.painel h2{color:inherit;opacity:.75}
+.painel.cad{background:#f1e8d0;color:#2b2416}
+.painel.cad .pnav{background:#2b2416;color:#f1e8d0}
+.painel.cad .pnav button{background:#3b3320;color:#f1e8d0;border-color:#5a4d2c}.painel.cad .pnav button.on{background:#f1e8d0;color:#2b2416}
+.painel.cad .card{background:#fbf5e4;border-color:#c9b98a;color:#2b2416}
+.painel.cad small{color:#6b5d3a}.painel.cad .nb{border-color:#d9cba0}
+.painel.cad button{background:#fffaf0;color:#2b2416;border-color:#b9a77a}
+.painel.cad .m-vista{background:#b9e3b4;border-color:#2f7d33}.painel.cad .m-suspeita{background:#ffe38a;border-color:#a8801a}.painel.cad .m-pensar{background:#cfe0ff;border-color:#3b62b8}
+.painel.cad .nb button:disabled{opacity:.45}
+.painel.chat{background:#0b1830;color:#dbe9ff}
+.painel.chat .pnav{background:#10295a;color:#dbe9ff}
+.painel.chat .pnav button{background:#16367a;color:#dbe9ff;border-color:#2c53a3}.painel.chat .pnav button.on{background:#dbe9ff;color:#0b1830}
+.painel.chat .card{background:#12264a;border-color:#2c53a3;color:#dbe9ff}.painel.chat small{color:#8fb0e8}
+.painel.chat button{background:#1a3d85;color:#fff;border-color:#3b62b8}
+.bolha{background:#1a3d85;border-radius:14px 14px 14px 4px;padding:8px 12px;margin:6px 40px 6px 0;width:fit-content;max-width:90%}
+.bolha.eu{background:#2a6d4a;border-radius:14px 14px 4px 14px;margin:6px 0 6px 40px;margin-left:auto}
+.bolha b{display:block;font-size:12px;opacity:.8}
+.frases{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.frases button{min-height:42px;font-size:15px}
+.painel.pal{background:#1d1030;color:#eadcff}
+.painel.pal .pnav{background:#3a1d66;color:#eadcff}
+.painel.pal .pnav button{background:#512a8f;color:#eadcff;border-color:#7a4fc4}.painel.pal .pnav button.on{background:#eadcff;color:#1d1030}
+.painel.pal .card{background:#2a1847;border-color:#7a4fc4;color:#eadcff}.painel.pal small{color:#bda0f0}
+.painel.pal .trio span{background:#eadcff;color:#1d1030}
+.somb{min-height:34px!important;padding:4px 10px!important;font-size:15px!important;width:auto!important}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="predios.js"></script>
+<script src="motor.js"></script>
+<script src="juiz.js"></script>
+<script src="nuvem.js"></script>
+<script src="transporte.js"></script>
+<script>
+"use strict";
+const $app = document.getElementById("app");
+const CORES = ["#e6e6e6","#e24b4a","#c9a93b","#7fb6d9","#8fc98f","#c28fd9","#e8a06a","#9a9a9a"];
+
+const S = { convite:null, tela:"login", aba:"entrar", erro:"", iniciando:true, juizOffline:false, conectado:false, nome:null,
+  convidado:false, sala:null, jogo:null, caderno:{}, historico:null, cadernoAberto:false,
+  atual:null, atualizando:false, pct:null, erroAtual:"", sel:{suspeito:null, arma:null}, acusando:false, acus:{suspeito:null, local:null, arma:null}, ultimoVi:0, vistoN:null, servico:false, vista3d:false, ang:45, elev:32, zoom:1, foco:null, alvo:null, painel:null, chatLido:0, chatVisto:null, som:true, noite:false, fixo:false, blefe:false, lembrando:false, rolando:0, anim:null, prazo:null, tut:null };
+try { S.vista3d = localStorage.getItem("detetive_3d") === "1"; S.som = localStorage.getItem("detetive_som") !== "0"; S.noite = localStorage.getItem("detetive_noite") === "1"; S.fixo = localStorage.getItem("detetive_fixo") === "1"; } catch(e){}
+
+function guardar(k, v){ try{ v==null ? localStorage.removeItem(k) : localStorage.setItem(k, v);}catch(e){} }
+function ler(k){ try{ return localStorage.getItem(k);}catch(e){ return null; } }
+function esc(t){ return String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ---------------------------------------------------------- conexão (Firebase) */
+let T = null;
+const configOk = () => window.FIREBASE_CONFIG && !/COLE_AQUI/.test(JSON.stringify(window.FIREBASE_CONFIG));
+function armazenar(){
+  return { ler: k => ler(k), gravar: (k,v) => guardar(k,v), apagar: k => guardar(k,null) };
+}
+function conectar(){
+  if (window.__enviarFalso) { S.conectado = true; return; }     // modo de teste
+  if (!window.firebase || !window.criarNuvem){ S.iniciando = false; S.erro = "Sem internet para carregar o Firebase. Confira a conexão e abra o app de novo."; return; }
+  if (!configOk()){ S.iniciando = false; S.erro = "Falta configurar o Firebase (arquivo firebase-config.js). Veja o LEIA-ME."; return; }
+  try {
+    const nuvem = window.criarNuvem(window.firebase, window.FIREBASE_CONFIG);
+    T = window.criarTransporte({ nuvem, Juiz: window.Juiz.Juiz, aoReceber: receber, armazenar: armazenar() });
+    S.conectado = true; T.iniciar();
+  } catch(e){ S.iniciando = false; S.erro = "Não foi possível iniciar o Firebase."; }
+}
+function enviar(msg){
+  if (window.__enviarFalso) return window.__enviarFalso(JSON.stringify(msg));
+  if (T) T.enviar(msg); else { S.erro = S.erro || "Ainda sem conexão."; desenhar(); }
+}
+
+function receber(m){
+  switch(m.tipo){
+    case "autenticado":
+      S.iniciando = false; S.nome = m.nome; S.convidado = m.convidado; S.erro = "";
+      if (S.tela === "login") S.tela = "menu";
+      break;
+    case "deslogado":
+      S.iniciando = false; S.nome = null; S.sala = S.jogo = null; S.caderno = {}; S.historico = null;
+      S.tela = "login"; S.cadernoAberto = false; S.juizOffline = false; S.vistoN = null; servicoPartida(false); break;
+    case "juiz_offline": S.juizOffline = !!m.offline; S.juizSeg = m.segundos || 0; break;
+    case "erro": S.erro = m.mensagem; break;
+    case "sala":
+      novidadesChat(m);
+      S.sala = m; S.erro = ""; servicoPartida(true);
+      S.prazo = m.restam != null ? Date.now() + m.restam * 1000 : null;
+      if (!m.iniciada){ S.jogo = null; S.caderno = {}; S.vistoN = null; S.acusando = false; S.alvo = null; S.anim = null; S.foco = null; S.zoom = 1; }
+      S.tela = m.iniciada ? "jogo" : "lobby"; break;
+    case "jogo":
+      processarNovidades(m.visao); S.jogo = m.visao; S.tela = "jogo"; agendarLembrete();
+      if (S.tut == null && ler("detetive_tut") !== "1") S.tut = 0;
+      break;
+    case "caderno": S.caderno = m.marcas || {}; break;
+    case "historico": S.historico = m.partidas; break;
+    case "saiu_da_sala":
+      S.sala = S.jogo = null; S.caderno = {}; S.tela = "menu"; S.cadernoAberto = false; S.painel = null; S.chatVisto = null; S.chatLido = 0; S.foco = null; S.zoom = 1; S.alvo = null; S.juizOffline = false; S.vistoN = null; servicoPartida(false);
+      S.erro = m.motivo || ""; break;
+  }
+  desenhar();
+}
+
+
+/* ------------------------------------------------------------- som (sintetizado, sem arquivos) */
+const Som = {
+  ctx: null,
+  pronto(){ if (!this.ctx){ try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return null; } } if (this.ctx.state === "suspended") this.ctx.resume(); return this.ctx; },
+  tom(f, dur, tipo = "sine", vol = .15, atraso = 0, f2 = null){
+    if (!S.som) return; const c = this.pronto(); if (!c) return;
+    try {
+      const t0 = c.currentTime + atraso, o = c.createOscillator(), g = c.createGain();
+      o.type = tipo; o.frequency.setValueAtTime(f, t0); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + dur + .02);
+    } catch(e){}
+  },
+  dados(){ for (let i = 0; i < 7; i++) this.tom(180 + Math.random() * 260, .05, "square", .08, i * .07); this.tom(520, .12, "triangle", .1, .55); },
+  passo(){ this.tom(220, .06, "triangle", .08); },
+  palpite(){ this.tom(392, .14, "triangle", .14); this.tom(523, .2, "triangle", .14, .13); },
+  carta(){ this.tom(784, .25, "sine", .12); this.tom(1175, .35, "sine", .09, .09); },
+  vez(){ [523, 659, 784].forEach((f, i) => this.tom(f, .18, "triangle", .15, i * .12)); },
+  chat(){ this.tom(660, .08, "sine", .12); this.tom(880, .1, "sine", .1, .07); },
+  lembrete(){ this.tom(880, .15, "square", .1); this.tom(880, .15, "square", .1, .25); this.tom(1100, .25, "square", .1, .5); },
+  erro(){ this.tom(300, .35, "sawtooth", .12, 0, 110); },
+  fim(){ [523, 659, 784, 1047].forEach((f, i) => this.tom(f, .3, "triangle", .15, i * .15)); },
+};
+document.addEventListener("pointerdown", () => { Som.pronto(); }, {once:true});
+function alternarSom(){ S.som = !S.som; guardar("detetive_som", S.som ? "1" : "0"); if (S.som) Som.palpite(); desenhar(); }
+const botaoSom = () => `<button class="ghost somb" onclick="alternarSom()" aria-label="${S.som ? "Desligar o som" : "Ligar o som"}">${S.som ? "🔊" : "🔇"}</button>`;
+
+/* ------------------------------------------------- avisos (notificações) */
+function novidadesChat(m){
+  const lista = m.chat || [], maxN = lista.reduce((a, c) => Math.max(a, c.n), 0);
+  if (S.chatVisto == null){ S.chatVisto = maxN; S.chatLido = maxN; return; }
+  const novas = lista.filter(c => c.n > S.chatVisto && c.de !== S.nome); S.chatVisto = Math.max(S.chatVisto, maxN);
+  if (S.painel === "chat") S.chatLido = maxN;
+  if (novas.length){ const u = novas[novas.length - 1]; avisar("jogada", `💬 ${u.de}`, (m.frases || [])[u.i] || ""); Som.chat(); }
+}
+function avisar(tipo, titulo, texto){ try { if (window.AndroidApp && window.AndroidApp.notificar) window.AndroidApp.notificar(tipo, titulo, texto); } catch(e){} }
+function vibrar(){ try { if (navigator.vibrate) navigator.vibrate([120, 80, 120]); } catch(e){} }
+function criarSalaBateria(){ try { if (window.AndroidApp && window.AndroidApp.pedirBateria) window.AndroidApp.pedirBateria(); } catch(e){} enviar({tipo:'criar_sala'}); }
+function servicoPartida(ativo){
+  if (S.servico === ativo) return; S.servico = ativo;
+  try { if (window.AndroidApp && window.AndroidApp.partida) window.AndroidApp.partida(ativo); } catch(e){}
+}
+/* Compara o que chegou com o que já se sabia e avisa: vez de jogar, palpites dos outros, cartas vistas. */
+function processarNovidades(v){
+  const prev = S.jogo, maxN = v.eventos.reduce((a,e)=>Math.max(a,e.n),0);
+  if (S.vistoN == null){ S.vistoN = maxN; return; }
+  const novos = v.eventos.filter(e=>e.n > S.vistoN); S.vistoN = Math.max(S.vistoN, maxN);
+  const av = [];
+  let sm = null;
+  for (const e of novos){
+    if (e.tipo === "dados") iniciarRolagem();
+    if (e.tipo === "movimento" && prev && S.sala && !document.hidden){
+      const antes = prev.jogadores.find(j => j.nome === e.jogador);
+      if (antes && antes.posicao !== e.destino){ const pts = pontosAnim(S.sala, antes.posicao, e.destino); if (pts){ S.anim = {nome:e.jogador, pts, t0:performance.now()}; setTimeout(animarPeao, 0); } }
+    }
+    if (e.tipo === "dados") sm = sm || "dados"; else if (e.tipo === "movimento") sm = sm || "passo"; else if (e.tipo === "palpite") sm = "palpite"; else if (e.tipo === "carta_revelada" || e.tipo === "carta_mostrada") sm = "carta"; else if (e.tipo === "acusacao_errada") sm = "erro";
+    if (e.tipo === "palpite" && e.jogador !== v.voce) av.push(["jogada", `🔎 ${e.jogador} palpitou`, `${e.suspeito} · ${e.local} · ${e.arma}`]);
+    else if (e.tipo === "acusacao_errada" && e.jogador !== v.voce) av.push(["jogada", `⚖ ${e.jogador} acusou errado`, "Saiu do jogo."]);
+    else if (e.tipo === "carta_revelada") av.push(["jogada", "👁 Você viu uma carta", `${e.carta} (de ${e.jogador})`]);
+    else if (e.tipo === "convocado" && e.jogador === v.voce) av.push(["jogada", "↪ Você foi levado", `Para ${e.destino}, por causa de um palpite.`]);
+  }
+  const minhaVez = v.fase !== "fim" && v.vez_de === v.voce && (!prev || prev.vez_de !== v.voce || prev.fase === "fim");
+  if (minhaVez) av.push(["vez", "🎯 É a sua vez!", "Role os dados e ande pelo mapa."]);
+  if (v.aguardando_carta_de === v.voce && (!prev || prev.aguardando_carta_de !== v.voce) && v.palpite_atual)
+    av.push(["vez", "🃏 Mostre uma carta", `${v.palpite_atual.jogador} palpitou: ${v.palpite_atual.suspeito}, ${v.palpite_atual.local}, ${v.palpite_atual.arma}.`]);
+  if (v.fase === "fim" && (!prev || prev.fase !== "fim")) av.push(["jogada", "Caso encerrado", v.vencedor ? `${v.vencedor} venceu.` : "Ninguém resolveu."]);
+  if (v.fase === "fim" && (!prev || prev.fase !== "fim")) sm = "fim";
+  if (minhaVez) sm = "vez";
+  if (sm) Som[sm]();
+  av.slice(-3).forEach(a => avisar(a[0], a[1], a[2]));
+  if (minhaVez) setTimeout(() => { if (S.jogo && S.sala && S.tela === "jogo" && S.jogo.vez_de === S.jogo.voce && S.jogo.fase !== "fim") focarMeuPeao(); }, 120);
+  if (minhaVez || (v.aguardando_carta_de === v.voce && (!prev || prev.aguardando_carta_de !== v.voce))) vibrar();
+}
+
+/* ------------------------------------------------------------ telas */
+function desenhar(){
+  const f = {login, menu, lobby, jogo}[S.tela] || login;
+  const foco = document.activeElement && document.activeElement.id;
+  const valores = {};
+  document.querySelectorAll("input").forEach(i => valores[i.id] = i.value);
+  const pEl = document.getElementById("painel"), pTop = pEl ? pEl.scrollTop : 0;
+  $app.innerHTML = bannerAtualizacao() + f() + (S.erro ? `<div class="err" role="alert">${esc(S.erro)}</div>` : "") + tutorialHtml();
+  document.querySelectorAll("input").forEach(i => { if (valores[i.id] != null) i.value = valores[i.id]; });
+  const pNovo = document.getElementById("painel"); if (pNovo && pTop) pNovo.scrollTop = pTop;
+  if (foco){ const el = document.getElementById(foco); if (el && el.tagName==="INPUT") el.focus(); }
+}
+const val = id => (document.getElementById(id)||{}).value || "";
+
+function login(){
+  if (S.iniciando && !S.erro) return `<h1>Detetive</h1><p class="sub">Carregando…</p>`;
+  const a = S.aba;
+  return `<h1>Detetive</h1><p class="sub">Um crime. Vários suspeitos. Uma só verdade.</p>${S.convite?`<div class="card" style="border-color:var(--red)">🔎 Convite para a sala <b>${esc(S.convite)}</b>. Entre com sua conta ou apelido para continuar.</div>`:""}
+  <div class="tabs">${["entrar","cadastrar","convidado"].map(t=>`<button class="${a===t?"on":""}" onclick="aba('${t}')">${{entrar:"Entrar",cadastrar:"Criar conta",convidado:"Só apelido"}[t]}</button>`).join("")}</div>
+  <div class="card">
+  ${a==="convidado" ? `<input id="apelido" placeholder="Seu apelido" maxlength="16" autocomplete="nickname">
+     <button class="main" onclick="entrarConvidado()">Jogar</button>`
+  : `<input id="usuario" placeholder="Usuário" maxlength="20" autocapitalize="none" autocomplete="username">
+     <input id="senha" type="password" placeholder="Senha" maxlength="72" autocomplete="${a==="entrar"?"current-password":"new-password"}">
+     <button class="main" onclick="${a==="entrar"?"entrarConta()":"cadastrar()"}">${a==="entrar"?"Entrar":"Criar conta"}</button>`}
+  </div>
+  <p style="text-align:center"><small>${window.AndroidApp?`v${esc(window.AndroidApp.versao())}`:""}</small></p>`;
+}
+function avisoConvite(){
+  return S.convite ? `<div class="card" style="border-color:var(--red)"><b>🔎 Convite para a sala ${esc(S.convite)}</b><button class="main" style="width:100%;margin-top:8px" onclick="entrarConvite()">🚪 Entrar na sala ${esc(S.convite)}</button></div>` : "";
+}
+function entrarConvite(){ const c = S.convite; S.convite = null; S.erro = ""; enviar({tipo:"entrar_sala", codigo:c}); }
+function lerConvite(c){ c = String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6); if (c.length >= 4){ S.convite = c; desenhar(); } }
+window.__verConvite = () => { try { if (window.AndroidApp && window.AndroidApp.convite) lerConvite(window.AndroidApp.convite()); } catch(e){} };
+function menu(){
+  return `<h1>Olá, ${esc(S.nome)}</h1><p class="sub">${S.convidado?"Jogando como convidado":"Detetive registrado"}</p>
+  ${avisoConvite()}
+  ${ler("detetive_sala")?`<div class="card" style="border-color:var(--red)"><b>Você estava em uma partida</b><button class="main" style="width:100%;margin-top:8px" onclick="enviar({tipo:'retomar'})">↩ Voltar à partida</button></div>`:""}
+  <div class="card stack"><button class="main" onclick="criarSalaBateria()">Criar sala</button>
+  <input id="codigo" placeholder="Código da sala" maxlength="6" autocapitalize="characters" style="text-align:center;letter-spacing:.2em;text-transform:uppercase">
+  <button onclick="entrarSala()">Entrar na sala</button></div>
+  ${S.convidado ? "" : `<button class="ghost" style="width:100%" onclick="enviar({tipo:'historico'})">📊 Minhas estatísticas</button>`}
+  ${S.historico ? estatisticas(S.historico) : ""}
+  <button class="ghost" style="width:100%;margin-top:12px" onclick="abrirTutorial()">❓ Como jogar</button>
+  <button class="ghost" style="width:100%;margin-top:12px" onclick="sair()">Sair da conta</button>`;
+}
+function estatisticas(h){
+  if (!h.length) return `<div class="card"><small>Nenhuma partida ainda. Jogue uma e volte aqui!</small></div>`;
+  const total = h.length, vit = h.filter(p => p.venceu).length, taxa = Math.round(vit * 100 / total);
+  let seq = 0; for (const p of h){ if (p.venceu) seq++; else break; }
+  let melhor = 0, cur = 0; for (const p of [...h].reverse()){ cur = p.venceu ? cur + 1 : 0; melhor = Math.max(melhor, cur); }
+  const comPal = h.filter(p => p.palpites != null && p.palpites > 0), mediaPal = comPal.length ? (comPal.reduce((a, p) => a + p.palpites, 0) / comPal.length).toFixed(1) : "—";
+  const acus = h.filter(p => p.acusou).length;
+  return `<div class="card"><h2 style="margin-top:0">Suas estatísticas</h2><div class="est">
+    <div><b>${total}</b><small>partidas</small></div><div><b>${vit}</b><small>vitórias</small></div>
+    <div><b>${taxa}%</b><small>de vitórias</small></div><div><b>${seq}</b><small>vitórias seguidas</small></div>
+    <div><b>${melhor}</b><small>melhor sequência</small></div><div><b>${mediaPal}</b><small>palpites por partida</small></div>
+    <div><b>${acus}</b><small>acusações feitas</small></div><div><b>${(h.reduce((a,p)=>a+(p.jogadores||0),0)/total).toFixed(1)}</b><small>jogadores por mesa</small></div></div>
+    <h2>Últimas partidas</h2>${h.slice(0,8).map(p=>`<div class="pl"><span>Sala ${esc(p.sala)} · ${p.jogadores} jogadores</span><span>${p.venceu?"🏆 venceu":"—"}</span></div>`).join("")}</div>`;
+}
+function avisoJuiz(){
+  if (!S.juizOffline) return "";
+  const seg = S.juizSeg || 0, tempo = seg >= 60 ? Math.floor(seg/60) + " min" : seg + " s";
+  return `<div class="err" role="alert">⚠ O anfitrião (${esc(S.sala.anfitriao)}) está com o app fechado ou sem internet (há ${tempo}). Peça para ele abrir o app.
+    <br><small>Se ele não voltar, você pode continuar a partida de onde parou.</small><button class="main" style="width:100%;margin-top:6px" onclick="assumir()">▶ Assumir a partida</button></div>`;
+}
+function configSala(s){
+  const bots = s.jogadores.some(j => j.bot);
+  return `<h2>Tempo da vez</h2><div class="card"><div class="opt"><button class="${s.tempo_vez?"":"on"}" onclick="enviar({tipo:'tempo_vez',minutos:0})">Sem tempo</button><button class="${s.tempo_vez?"on":""}" onclick="definirTempo()">Com tempo</button></div>
+    <div class="row" style="align-items:center"><input id="minutos" type="number" inputmode="numeric" min="1" max="30" value="${s.tempo_vez||2}" aria-label="Minutos por vez" style="max-width:90px;margin:0"><small style="flex:2">minutos por vez. Passou o tempo, a vez passa sozinha.</small></div></div>
+    ${bots?velocidadeBots(s):""}`;
+}
+function definirTempo(){ const m = parseInt(val("minutos"), 10); if (!(m >= 1 && m <= 30)){ S.erro = "Digite de 1 a 30 minutos."; desenhar(); return; } S.erro = ""; enviar({tipo:"tempo_vez", minutos:m}); }
+const velocidadeBots = s => `<div class="card"><small>🤖 Velocidade dos bots</small><div class="opt"><button class="${s.bots_vel==="rapido"?"on":""}" onclick="enviar({tipo:'bots_velocidade',v:'rapido'})">⚡ Rápido</button><button class="${s.bots_vel==="lento"?"on":""}" onclick="enviar({tipo:'bots_velocidade',v:'lento'})">🐢 Lento</button></div></div>`;
+function convidarWhats(){
+  const codigo = S.sala.codigo, txt = `Vem jogar Detetive comigo! 🔎\nCódigo da sala: ${codigo}\n\n👉 Toque para entrar ou baixar o app (Android e iPhone):\nhttps://alvaromotajr.github.io/detetive_game/convite.html?sala=${codigo}`;
+  try { if (window.AndroidApp && typeof window.AndroidApp.compartilhar === "function"){ window.AndroidApp.compartilhar(txt); return; } } catch(e){}
+  try { navigator.clipboard.writeText(txt); S.erro = "Convite copiado. Cole no WhatsApp."; } catch(e){ S.erro = "Código da sala: " + codigo; }
+  desenhar();
+}
+function lobby(){
+  const s = S.sala, souDono = s.anfitriao === S.nome, n = s.jogadores.length;
+  const cenarios = souDono ? `<h2>Cenário</h2><div class="opt">${(s.cenarios||[]).map(c=>`<button class="${c.id===s.cenarioId?"on":""}" onclick="enviar({tipo:'escolher_cenario',id:'${esc(c.id)}'})">${esc(c.nome.replace(/^Mistério (no|na|em) /,""))}</button>`).join("")}</div>` : "";
+  return painel() + avisoJuiz() + `<h1>Sala de espera</h1><p class="sub">${esc(s.cenario)}</p>
+  ${cenarios}<div class="pre">${s.tabuleiro?botaoVista()+`<div data-rot>${desenhoTabuleiro(s, null)}</div>`:""}</div>
+  <div class="card"><small>Código para convidar</small><div class="code">${esc(s.codigo)}</div></div>
+  <h2>Jogadores (${n}/${s.maximo})</h2><div class="card">${s.jogadores.map(j=>`<div class="pl"><span><span class="dot ${j.conectado?"":"off"}"></span>${esc(j.nome)}${j.nome===s.anfitriao?'<span class="tag">anfitrião</span>':""}${j.bot?'<span class="tag">bot</span>':""}</span>${souDono&&j.bot?`<button class="ghost" style="padding:4px 10px" onclick="enviar({tipo:'remover_bot',nome:'${esc(j.nome)}'})">remover</button>`:""}</div>`).join("")}</div>
+  ${souDono&&n<s.maximo?`<button class="ghost" style="width:100%;margin-bottom:10px" onclick="enviar({tipo:'add_bot'})">+ Adicionar bot (para testar sozinho)</button>`:""}
+  ${souDono?configSala(s):`<small>⏱ Tempo da vez: ${s.tempo_vez?s.tempo_vez+" min":"sem tempo"}</small>`}
+  <button class="ghost" style="width:100%;margin:10px 0" onclick="convidarWhats()">📲 Convidar pelo WhatsApp</button>
+  ${souDono ? `<button class="main" style="width:100%" ${n<s.minimo?"disabled":""} onclick="enviar({tipo:'iniciar'})">Começar o caso</button>${n<s.minimo?`<small>Precisa de pelo menos ${s.minimo} jogadores.</small>`:""}` : `<p class="sub">Aguardando ${esc(s.anfitriao)} começar…</p>`}
+  ${souDono ? `<p><small>Você é o anfitrião: ele cuida das regras. Mantenha o app aberto durante a partida.</small></p>` : ""}
+  <div class="row" style="margin-top:10px">${botaoPainel("chat","💬 Chat")}${botaoSom()}</div>
+  <button class="ghost" style="width:100%;margin-top:10px" onclick="enviar({tipo:'sair_sala'})">Sair da sala</button>`;
+}
+
+function textoEvento(e){
+  const L = {
+    dados: e=>`${e.jogador} tirou ${e.dados[0]} e ${e.dados[1]}: anda até ${e.dados[0]+e.dados[1]} casas.`,
+    movimento: e=>e.destino.startsWith("rua:") ? `${e.jogador} andou pelas ruas.` : `${e.jogador} entrou em ${e.destino}.`,
+    atalho: e=>`${e.jogador} usou o atalho secreto até ${e.destino}.`,
+    palpite: e=>`${e.jogador} palpitou: ${e.suspeito}, ${e.local}, ${e.arma}.`,
+    convocado: e=>`${e.personagem} (${e.jogador}) foi levado para ${e.destino}.`,
+    sem_carta: e=>`${e.jogador} não tem nenhuma dessas cartas.`,
+    carta_mostrada: e=>`${e.jogador} mostrou uma carta para ${e.para}.`,
+    carta_revelada: e=>`Você viu: ${e.carta} (de ${e.jogador}).`,
+    carta_que_mostrei: e=>`Você mostrou ${e.carta} para ${e.para}.`,
+    tempo_esgotado: e=>`Acabou o tempo de ${e.jogador}.`,
+    ninguem_refutou: ()=>`Ninguém tinha essas cartas!`,
+    acusacao_certa: e=>`${e.jogador} acusou e ACERTOU: ${e.suspeito}, ${e.local}, ${e.arma}.`,
+    acusacao_errada: e=>`${e.jogador} acusou errado e saiu do jogo.`,
+    vez_de: e=>`Vez de ${e.jogador}.`,
+    removido: e=>`${e.jogador} saiu da partida.`,
+    fim_por_eliminacao: e=>e.vencedor?`${e.vencedor} venceu por ser o último.`:`Todos saíram.`,
+  };
+  return L[e.tipo] ? L[e.tipo](e) : "";
+}
+
+/* ----------------------------------------------------------- caderno */
+function cartasSabidas(){
+  const v = S.jogo, auto = new Set((v.sua_mao||[]).concat(v.cartas_publicas||[]));
+  for (const e of v.eventos) if (e.tipo === "carta_revelada" && e.carta) auto.add(e.carta);
+  return auto;
+}
+const marcaLocal = n => (S.tela === "jogo" && S.jogo) ? marcaDe(n).m : null;
+function marcaDe(c){
+  if (cartasSabidas().has(c)) return {m:"vista", auto:true};
+  let m = S.caderno[c];
+  if (m === "tenho" || m === "descartado") m = "vista";
+  if (m === "talvez") m = "suspeita";
+  return {m: m || null, auto:false};
+}
+const ehVista = c => marcaDe(c).m === "vista";
+const ehSuspeita = c => marcaDe(c).m === "suspeita";
+const ehPensar = c => marcaDe(c).m === "pensar";
+const iconeMarca = c => ehSuspeita(c) ? "❓ " : ehPensar(c) ? "💭 " : "";
+
+/* ---------------------------------------------------------- tabuleiro */
+const SETAS = {dir:"→", esq:"←", baixo:"↓", cima:"↑"};
+function emojiDe(s, personagem){ const i = s.cartas.suspeitos.indexOf(personagem); return (s.emojiSuspeitos && s.emojiSuspeitos[i]) || "🙂"; }
+function quebra(nome){
+  if (nome.length <= 10) return [nome];
+  const m = nome.length / 2; let melhor = -1, d = 99;
+  for (let i = 0; i < nome.length; i++) if (nome[i] === " " && Math.abs(i - m) < d){ d = Math.abs(i - m); melhor = i; }
+  return melhor < 0 ? [nome] : [nome.slice(0, melhor), nome.slice(melhor + 1)];
+}
+/* ---- posição de um lugar no tabuleiro (em casas) ---- */
+function posXY(s, lugar){
+  const m = /^rua:(\d+):(\d+)$/.exec(lugar || "");
+  if (m) return [+m[1] + .5, +m[2] + .5];
+  const r = s.tabuleiro.salas.find(r => r.nome === lugar);
+  return r ? [r.x0 + r.larg / 2, r.y0 + r.alt / 2] : [s.tabuleiro.tam / 2, s.tabuleiro.tam / 2];
+}
+/* Caminho mais curto (para mostrar antes de confirmar). Só vale para quem está na vez. */
+function caminhoAte(s, v, destino){
+  const eu = v.jogadores.find(j => j.nome === v.voce); if (!eu) return [];
+  return caminhoEntre(s, eu.posicao, destino, new Set(v.jogadores.filter(j => j.nome !== v.voce && !j.eliminado).map(j => j.posicao)));
+}
+function caminhoEntre(s, origem, destino, ocupadas){
+  const t = s.tabuleiro;
+  const dentro = new Set(), entradas = {}, saidas = {};
+  t.salas.forEach(r => {
+    for (let dx = 0; dx < r.larg; dx++) for (let dy = 0; dy < r.alt; dy++) dentro.add((r.x0 + dx) + "," + (r.y0 + dy));
+    entradas[`rua:${r.entrada.x}:${r.entrada.y}`] = r.nome; saidas[r.nome] = `rua:${r.saida.x}:${r.saida.y}`;
+  });
+  const viz = no => {
+    if (saidas[no]) return [saidas[no]];
+    const m = /^rua:(\d+):(\d+)$/.exec(no), x = +m[1], y = +m[2], out = [];
+    for (const [a, b] of [[0,-1],[0,1],[-1,0],[1,0]]) { const nx = x + a, ny = y + b; if (nx >= 0 && ny >= 0 && nx < t.tam && ny < t.tam && !dentro.has(nx + "," + ny)) out.push(`rua:${nx}:${ny}`); }
+    if (entradas[no]) out.push(entradas[no]);
+    return out;
+  };
+  const ant = new Map([[origem, null]]); let fila = [origem];
+  while (fila.length && !ant.has(destino)) {
+    const prox = [];
+    for (const no of fila) for (const w of viz(no)) {
+      if (ant.has(w) || (!saidas[w] && ocupadas.has(w))) continue;
+      ant.set(w, no); if (!saidas[w]) prox.push(w);
+    }
+    fila = prox;
+  }
+  if (!ant.has(destino)) return [];
+  const cam = []; for (let no = destino; no && no !== origem; no = ant.get(no)) cam.unshift(no);
+  return cam;
+}
+
+/* Peão andando casa por casa. */
+const PASSO_MS = 170;
+function pontosAnim(s, origem, destino){
+  const alt = l => { const r = s.tabuleiro.salas.find(r => r.nome === l); return r ? Predios.modelo(r.nome).alt + .05 : 0; };
+  const pt = l => { const [x, y] = posXY(s, l); return [x, y, alt(l)]; };
+  const cam = caminhoEntre(s, origem, destino, new Set());
+  if (!cam.length) return null;
+  return [pt(origem), ...cam.map(pt)];
+}
+function posicaoAnim(a){
+  const t = (performance.now() - a.t0) / PASSO_MS, n = a.pts.length - 1;
+  if (t >= n) return null;
+  const i = Math.floor(t), f = t - i, p = a.pts[i], q = a.pts[i + 1];
+  return [p[0] + (q[0] - p[0]) * f, p[1] + (q[1] - p[1]) * f, p[2] + (q[2] - p[2]) * f + Math.sin(f * Math.PI) * .35];
+}
+function animarPeao(){
+  const a = S.anim; if (!a) return;
+  const passo = () => { if (S.anim !== a) return; redesenharMapa(); if (performance.now() - a.t0 >= (a.pts.length - 1) * PASSO_MS) { S.anim = null; redesenharMapa(); } else requestAnimationFrame(passo); };
+  requestAnimationFrame(passo);
+}
+function iniciarRolagem(){
+  S.rolando = Date.now() + 1000; const fim = S.rolando;
+  const iv = setInterval(() => { if (Date.now() >= fim){ clearInterval(iv); S.rolando = 0; } desenhar(); }, 100);
+}
+
+/* ------------------------------------------ tabuleiro (3D com giro; 2D visto de cima) */
+function tabuleiro(s, v){
+  const t = s.tabuleiro, n = t.tam, tema = s.tema, d3 = S.vista3d;
+  const psi = (d3 ? (S.ang == null ? 45 : S.ang) : 0) * Math.PI / 180, e = (d3 ? (S.elev == null ? 32 : S.elev) : 90) * Math.PI / 180;
+  const K = d3 ? 16 : 22, fx = S.foco ? S.foco[0] : n / 2, fy = S.foco ? S.foco[1] : n / 2;
+  const cp = Math.cos(psi), sp = Math.sin(psi), ce = Math.cos(e), se = Math.sin(e);
+  const P = (x, y, z = 0) => {
+    const dx = x - fx, dy = y - fy, u = dx * cp - dy * sp, w = dx * sp + dy * cp;
+    return [u * K, w * K * se - z * K * ce, w * ce + z * se];
+  };
+  const nt = S.noite, nc = h => nt ? Predios.noite(h) : h;
+  const cam = {P, d: [ce * sp, ce * cp, se]}, camN = {P, d: cam.d, noite: nt};
+  const pts = arr => arr.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+  const poly = (cantos, z, extra) => `<polygon points="${pts(cantos.map(c => P(c[0], c[1], z)))}" ${extra}/>`;
+  const dentro = new Set(), portas = {};
+  t.salas.forEach(r => {
+    for (let dx = 0; dx < r.larg; dx++) for (let dy = 0; dy < r.alt; dy++) dentro.add((r.x0 + dx) + "," + (r.y0 + dy));
+    portas[`rua:${r.entrada.x}:${r.entrada.y}`] = {tipo:"entrada", seta:r.entrada.seta};
+    portas[`rua:${r.saida.x}:${r.saida.y}`] = {tipo:"saida", seta:r.saida.seta};
+  });
+  const minha = !!v && v.vez_de === v.voce && v.fase === "mover";
+  const ir = new Set(minha ? v.opcoes_movimento : []);
+  const alvoCam = minha && S.alvo && ir.has(S.alvo) ? caminhoAte(s, v, S.alvo) : [];
+  const noCam = new Set(alvoCam);
+  const atalhos = new Set((s.atalhos || []).flat());
+  const DIR = {dir:[1,0], esq:[-1,0], baixo:[0,1], cima:[0,-1]};
+  let o = `<svg class="tabuleiro${d3 ? " iso" : ""}" viewBox="-190 ${d3 ? -160 : -180} 380 ${d3 ? 300 : 360}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabuleiro ${d3 ? "em 3D" : "visto de cima"}">`;
+  const quad = (x, y, m = 0) => [[x+m,y+m],[x+1-m,y+m],[x+1-m,y+1-m],[x+m,y+1-m]];
+  o += poly([[-.3,-.3],[n+.3,-.3],[n+.3,n+.3],[-.3,n+.3]], -.04, `fill="${nt?"#04060c":"#0b0b0e"}" stroke="${nc(tema.borda)}" stroke-width="1"`);
+  for (let x = 0; x < n; x++) for (let y = 0; y < n; y++) {
+    if (dentro.has(x + "," + y)) continue;
+    const id = `rua:${x}:${y}`, fill = (x + y) % 2 === 0 ? tema.linha : tema.rua, alc = ir.has(id);
+    o += poly(quad(x, y), 0, `fill="${nc(fill)}" stroke="${nc(tema.linha)}" stroke-width=".6"`);
+    if (minha && !alc) o += poly(quad(x, y), 0.005, `fill="#000" opacity=".62" pointer-events="none"`);
+    if (alc) o += poly(quad(x, y, .04), 0.02, `class="ir" fill="${noCam.has(id) ? "#ffd166" : "#fff3d6"}" fill-opacity="${noCam.has(id) ? .95 : .78}" stroke="#e24b4a" stroke-width="1.8" onclick="tocar('${id}')"`);
+    const p = portas[id];
+    if (p) {
+      const [dx, dy] = DIR[p.seta], cx = x + .5, cy = y + .5, px = -dy, py = dx;
+      const tri = [[cx + .38*dx, cy + .38*dy], [cx - .22*dx + .3*px, cy - .22*dy + .3*py], [cx - .22*dx - .3*px, cy - .22*dy - .3*py]];
+      o += poly(tri, 0.03, `fill="${p.tipo === "entrada" ? "#f2f2f2" : "#e24b4a"}" pointer-events="none"`);
+    }
+  }
+  if (alvoCam.length) {   // pontinhos do caminho
+    alvoCam.forEach((id, i) => { const m = /^rua:(\d+):(\d+)$/.exec(id); if (!m) return; const c = P(+m[1] + .5, +m[2] + .5, 0.05);
+      o += `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="${i === alvoCam.length - 1 ? 4.6 : 3}" fill="#e24b4a" stroke="#fff" stroke-width="1" pointer-events="none"/>`; });
+  }
+  const objs = [], topo = [];
+  for (const r of t.salas) objs.push({k: d3 ? P(r.x0 + r.larg / 2, r.y0 + r.alt / 2)[2] : -1, sala: r});
+  if (v) {
+    const slots = [[0,1],[1,1],[2,1],[0,2],[1,2],[2,2],[2,0],[0,0]], porLugar = {};
+    v.jogadores.forEach((j, i) => { (porLugar[j.posicao] = porLugar[j.posicao] || []).push([j, i]); });
+    for (const [lugar, lista] of Object.entries(porLugar)) {
+      const sala = t.salas.find(r => r.nome === lugar);
+      lista.forEach(([j, i], k) => {
+        if (sala) { const [sx, sy] = slots[k % 8], wx = sala.x0 + sx + .5, wy = sala.y0 + sy + .5, alt = Predios.modelo(sala.nome).alt; topo.push({k: P(wx, wy, alt)[2], peao:[j, i], wx, wy, wz: d3 ? alt + .05 : 0}); }
+        else { const m = /^rua:(\d+):(\d+)$/.exec(lugar), wx = +m[1] + .5, wy = +m[2] + .5; objs.push({k: d3 ? P(wx, wy, 0)[2] + .2 : 1, peao:[j, i], wx, wy, wz: 0}); }
+      });
+    }
+  }
+  const desenhaPeao = ob => {
+    const [j, i] = ob.peao, eu = j.nome === v.voce, vez = j.nome === v.vez_de && v.fase !== "fim";
+    if (S.anim && S.anim.nome === j.nome) { const q = posicaoAnim(S.anim); if (q) { ob = {...ob, wx: q[0], wy: q[1], wz: q[2]}; } }
+    const b = P(ob.wx, ob.wy, ob.wz);
+    let g = `<g class="peao" opacity="${j.eliminado ? .35 : 1}">`;
+    const rx = .34 * K, ry = Math.max(.34 * K * se, 2);
+    g += `<ellipse cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" rx="${rx}" ry="${ry.toFixed(1)}" fill="#000" opacity=".4"/>`;
+    if (vez) g += `<ellipse cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" rx="${rx + 3}" ry="${(ry + 2).toFixed(1)}" fill="none" stroke="#f2f2f2" stroke-width="1.4" stroke-dasharray="3 2"/>`;
+    if (d3) {
+      g += Predios.pessoaSvg(j.personagem, ob.wx, ob.wy, ob.wz, cam, CORES[i % 8]);
+      if (eu) g += `<ellipse cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" rx="${rx}" ry="${ry.toFixed(1)}" fill="none" stroke="#e24b4a" stroke-width="2.2"/>`;
+      const topoP = P(ob.wx, ob.wy, ob.wz + 1.75);
+      g += `<text x="${topoP[0].toFixed(1)}" y="${topoP[1].toFixed(1)}" font-size="7.5" text-anchor="middle" fill="${eu ? "#ff9b9a" : "#fff"}" style="paint-order:stroke;stroke:#000;stroke-width:2px">${esc(j.nome.split(" ")[0])}</text>`;
+    } else {
+      g += `<circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="10" fill="${CORES[i % 8]}" stroke="${eu ? "#e24b4a" : "#000"}" stroke-width="${eu ? 2.6 : 1}"/>`
+        + `<text x="${b[0].toFixed(1)}" y="${(b[1] + 1).toFixed(1)}" font-size="12.5" text-anchor="middle" dominant-baseline="central">${emojiDe(s, j.personagem)}</text>`;
+    }
+    return g + `</g>`;
+  };
+  objs.sort((a, b) => a.k - b.k);
+  const rotulos = [];
+  for (const ob of objs) {
+    if (ob.sala) {
+      const r = ob.sala, x0 = r.x0, y0 = r.y0, x1 = x0 + r.larg, y1 = y0 + r.alt, alc = ir.has(r.nome), m = Predios.modelo(r.nome), esc_ = esc(r.nome);
+      o += `<g${alc ? ` class="ir" onclick="tocar('${esc_}')"` : ""}${minha && !alc ? ` style="filter:brightness(.38) saturate(.7)"` : (marcaLocal(r.nome) === "vista" ? ` style="filter:saturate(.5) brightness(.88)"` : "")}>`;
+      o += poly([[x0,y0],[x1,y0],[x1,y1],[x0,y1]], 0.005, `fill="${nc(m.solo)}" stroke="${alc ? "#e24b4a" : nc(tema.borda)}" stroke-width="${alc ? 2.6 : 1}"`);
+      o += Predios.svg(r.nome, x0, y0, camN);
+      if (alc) o += poly([[x0,y0],[x1,y0],[x1,y1],[x0,y1]], 0.03, `fill="rgba(255,243,214,.22)" stroke="${S.alvo === r.nome ? "#ffd166" : "#e24b4a"}" stroke-width="${S.alvo === r.nome ? 4 : 2.6}"`);
+      o += `</g>`;
+      rotulos.push({r, m, apagada: minha && !alc});
+    } else o += desenhaPeao(ob);
+  }
+  for (const {r, m, apagada} of rotulos) {
+    const c = P(r.x0 + r.larg / 2, r.y0 + r.alt / 2, m.alt + .3);
+    quebra(r.nome).forEach((linha, i, tot) => { o += `<text x="${c[0].toFixed(1)}" y="${(c[1] - 2 + i * 9 - (tot.length - 1) * 9).toFixed(1)}" font-size="7.8" text-anchor="middle" fill="${apagada ? "#999" : "#fff"}" pointer-events="none" style="paint-order:stroke;stroke:#000;stroke-width:2.2px">${esc(linha)}</text>`; });
+    const mk = marcaLocal(r.nome), sel = { vista: ["✓", "#2e9e5b"], suspeita: ["?", "#d99a1e"], pensar: ["…", "#6b6bd6"] }[mk];
+    if (sel) { const q = P(r.x0 + r.larg - .7, r.y0 + .7, m.alt + .3);
+      o += `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="6.2" fill="${sel[1]}" stroke="#fff" stroke-width="1" pointer-events="none"/><text x="${q[0].toFixed(1)}" y="${(q[1] + .5).toFixed(1)}" font-size="8.5" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#fff" pointer-events="none">${sel[0]}</text>`; }
+    if (atalhos.has(r.nome)) { const a = P(r.x0 + r.larg - .4, r.y0 + r.alt - .4, .2); o += `<text x="${a[0]}" y="${a[1]}" font-size="9" text-anchor="middle" dominant-baseline="central" pointer-events="none">🕳️</text>`; }
+  }
+  topo.sort((a, b) => a.k - b.k);
+  for (const ob of topo) o += desenhaPeao(ob);
+  return o + `</svg>`;
+}
+function desenhoTabuleiro(s, v){
+  const svg = tabuleiro(s, v), z = S.zoom || 1;
+  if (z === 1) return svg;
+  return svg.replace(/viewBox="([-\d.]+) ([-\d.]+) ([-\d.]+) ([-\d.]+)"/, (m, a, b, c, d) => { a = +a; b = +b; c = +c; d = +d; const w = c / z, h = d / z; return `viewBox="${(a + (c - w) / 2).toFixed(1)} ${(b + (d - h) / 2).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}"`; });
+}
+function alternarFixo(){ S.fixo = !S.fixo; guardar("detetive_fixo", S.fixo ? "1" : "0"); desenhar(); }
+function alternarNoite(){ S.noite = !S.noite; guardar("detetive_noite", S.noite ? "1" : "0"); desenhar(); }
+function alternarVista(){ S.vista3d = !S.vista3d; try { localStorage.setItem("detetive_3d", S.vista3d ? "1" : "0"); } catch(e){} desenhar(); }
+const botaoVista = () => `<div class="vista">${S.vista3d?`<button onclick="alternarFixo()" class="${S.fixo?"main":"ghost"}" aria-label="${S.fixo?"Soltar o mapa":"Fixar o mapa"}">${S.fixo?"🔒":"🔓"}</button>`:""}${S.jogo&&S.tela==="jogo"?`<button onclick="focarMeuPeao()" class="ghost" aria-label="Centralizar no meu peão">🎯</button>`:""}<button onclick="verTudo()" class="ghost" aria-label="Ver o mapa todo">🗺</button>${botaoSom()}<button onclick="alternarNoite()" class="ghost" aria-label="Alternar dia e noite">${S.noite?"☀":"🌙"}</button><button onclick="alternarVista()" class="ghost">${S.vista3d ? "▦ Ver em 2D" : "🧊 Ver em 3D"}</button></div><small class="leg">${S.vista3d?(S.fixo?"Mapa fixo: só aproximar e afastar":"Arraste para girar e inclinar"):"Arraste para mover o mapa"} · pinça para aproximar</small>`;
+function girar(g){ S.ang = (((S.ang == null ? 45 : S.ang) + g) % 360 + 360) % 360; redesenharMapa(); }
+function redesenharMapa(){ document.querySelectorAll("[data-rot]").forEach(el => { el.innerHTML = desenhoTabuleiro(S.sala, S.tela === "jogo" ? S.jogo : null); }); }
+/* Câmera suave até um ponto do tabuleiro. */
+let animCam = 0;
+function irPara(fx, fy, z, dur = 450){
+  const f0 = S.foco ? [...S.foco] : [S.sala.tabuleiro.tam / 2, S.sala.tabuleiro.tam / 2], z0 = S.zoom || 1, t0 = performance.now(), id = ++animCam;
+  const passo = agora => {
+    if (id !== animCam) return;
+    const k = Math.min(1, (agora - t0) / dur), q = k * k * (3 - 2 * k);
+    S.foco = [f0[0] + (fx - f0[0]) * q, f0[1] + (fy - f0[1]) * q]; S.zoom = z0 + (z - z0) * q;
+    redesenharMapa(); if (k < 1) requestAnimationFrame(passo);
+  };
+  requestAnimationFrame(passo);
+}
+function focarMeuPeao(){ const v = S.jogo, eu = v && v.jogadores.find(j => j.nome === v.voce); if (!eu) return; const [x, y] = posXY(S.sala, eu.posicao); irPara(x, y, 1.7); }
+function verTudo(){ const n = S.sala.tabuleiro.tam; irPara(n / 2, n / 2, 1); }
+/* Toque numa casa: primeiro mostra o caminho; tocar de novo (ou "Confirmar") anda. */
+function tocar(id){ const v = S.jogo, eu = v && v.jogadores.find(j => j.nome === v.voce); if (S.alvo === id || (eu && eu.posicao === id)) { mover(id); return; } S.alvo = id; S.erro = ""; desenhar(); }
+
+/* Arrastar o dedo: no 3D gira (lados) e inclina (cima/baixo); no 2D move o mapa. Dois dedos: pinça. */
+let arrasto = null, arrastou = false;
+const dedos = new Map(); let pinca = null;
+const limZoom = z => Math.max(1, Math.min(3.5, z));
+document.addEventListener("pointerdown", e => {
+  const el = e.target.closest && e.target.closest("[data-rot]");
+  if (!el) return;
+  dedos.set(e.pointerId, [e.clientX, e.clientY]);
+  if (dedos.size === 2){
+    const [p, q] = [...dedos.values()];
+    pinca = {d: Math.hypot(p[0] - q[0], p[1] - q[1]) || 1, z: S.zoom || 1};
+    arrasto = null; arrastou = true; return;
+  }
+  const n = S.sala ? S.sala.tabuleiro.tam : 15;
+  arrasto = {x: e.clientX, y: e.clientY, a: S.ang == null ? 45 : S.ang, el0: S.elev == null ? 32 : S.elev, f0: S.foco ? [...S.foco] : [n / 2, n / 2], n, mov: false, el, id: e.pointerId};
+});
+document.addEventListener("pointermove", e => {
+  if (dedos.has(e.pointerId)) dedos.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pinca && dedos.size >= 2){
+    const [p, q] = [...dedos.values()], d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+    S.zoom = limZoom(pinca.z * d / pinca.d); redesenharMapa(); return;
+  }
+  if (!arrasto) return;
+  const dx = e.clientX - arrasto.x, dy = e.clientY - arrasto.y;
+  if (!arrasto.mov && Math.hypot(dx, dy) > 6){ arrasto.mov = true; animCam++; try { arrasto.el.setPointerCapture(arrasto.id); } catch(x){} }
+  if (!arrasto.mov) return;
+  if (S.vista3d){
+    if (S.fixo) return;
+    S.ang = (((arrasto.a - dx * 0.7) % 360) + 360) % 360;
+    S.elev = Math.max(15, Math.min(90, arrasto.el0 + dy * 0.35));
+  } else {
+    const W = arrasto.el.clientWidth || 360, k = 380 / W / (22 * (S.zoom || 1)), n = arrasto.n;
+    S.foco = [Math.max(0, Math.min(n, arrasto.f0[0] - dx * k)), Math.max(0, Math.min(n, arrasto.f0[1] - dy * k))];
+  }
+  redesenharMapa();
+});
+document.addEventListener("wheel", e => {
+  if (!(e.target.closest && e.target.closest("[data-rot]"))) return;
+  e.preventDefault(); S.zoom = limZoom((S.zoom || 1) * (e.deltaY < 0 ? 1.12 : 1 / 1.12)); redesenharMapa();
+}, {passive:false});
+const fimArrasto = e => { if (e && e.pointerId != null){ dedos.delete(e.pointerId); if (dedos.size < 2 && pinca){ pinca = null; arrastou = true; setTimeout(() => { arrastou = false; }, 120); } } if (arrasto && arrasto.mov){ arrastou = true; setTimeout(() => { arrastou = false; }, 80); } arrasto = null; };
+document.addEventListener("pointerup", fimArrasto); document.addEventListener("pointercancel", fimArrasto);
+document.addEventListener("click", e => { if (arrastou){ e.stopPropagation(); e.preventDefault(); } }, true);
+
+/* ------------------------------------------------------ última jogada */
+function ultimaJogada(v, s){
+  const ev = v.eventos; let i = -1;
+  for (let k = ev.length - 1; k >= 0; k--) if (["palpite","acusacao_certa","acusacao_errada"].includes(ev[k].tipo)) { i = k; break; }
+  if (i < 0) return "";
+  const e = ev[i], quem = x => x === v.voce ? "Você" : esc(x);
+  if (e.tipo !== "palpite") {
+    const certo = e.tipo === "acusacao_certa";
+    return `<div class="card jogada"><div class="quem">⚖ ${quem(e.jogador)} ${certo ? "acusou e acertou" : "acusou e errou"}</div>
+      ${certo ? `<div class="trio"><span>${esc(e.suspeito)}</span><span>📍 ${esc(e.local)}</span><span>🔪 ${esc(e.arma)}</span></div>` : ""}</div>`;
+  }
+  const res = ev.slice(i + 1).map(x => {
+    if (x.tipo === "convocado") return `<p>↪ ${esc(x.personagem)} foi levado para ${esc(x.destino)}.</p>`;
+    if (x.tipo === "sem_carta") return `<p>✖ ${quem(x.jogador)} não tem nenhuma dessas cartas.</p>`;
+    if (x.tipo === "carta_mostrada") { if (x.jogador === v.voce) return ""; return `<p>✔ ${quem(x.jogador)} mostrou uma carta${x.para === v.voce ? " para você" : " para " + esc(x.para)}.</p>`; }
+    if (x.tipo === "carta_que_mostrei") return `<p class="vi">🃏 Você mostrou: <b>${esc(x.carta)}</b> para ${esc(x.para)}</p>`;
+    if (x.tipo === "carta_revelada") return `<p class="vi">👁 Você viu: <b>${esc(x.carta)}</b> (de ${esc(x.jogador)})</p>`;
+    if (x.tipo === "ninguem_refutou") return `<p class="vi">⚠ Ninguém tinha nenhuma dessas cartas!</p>`;
+    return "";
+  }).join("");
+  const espera = v.fase === "refutando" ? `<p>⏳ Aguardando ${quem(v.aguardando_carta_de)} mostrar uma carta…</p>` : "";
+  return `<div class="card jogada"><div class="quem">🔎 ${quem(e.jogador)} ${e.jogador === v.voce ? "palpitou" : "palpitou"}</div>
+    <div class="trio"><span>${emojiDe(s, e.suspeito)} ${esc(e.suspeito)}</span><span>📍 ${esc(e.local)}</span><span>🔪 ${esc(e.arma)}</span></div>
+    <div class="res">${res}${espera}</div></div>`;
+}
+
+const faceDado = n => String.fromCodePoint(0x267F + n);
+const restamS = () => S.prazo ? Math.max(0, Math.ceil((S.prazo - Date.now()) / 1000)) : 0;
+const fmtTempo = t => Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0");
+setInterval(() => { const el = document.getElementById("cron"); if (el && S.prazo){ const t = restamS(); el.textContent = "⏱ " + fmtTempo(t); el.classList.toggle("pouco", t <= 15); } }, 500);
+function dadosHtml(v){
+  if (!v.dados) return "";
+  if (Date.now() < S.rolando){ const r = () => 1 + Math.floor(Math.random() * 6); return `<div class="dados rola"><span>${faceDado(r())}</span><span>${faceDado(r())}</span><b>rolando…</b></div>`; }
+  return `<div class="dados"><span>${faceDado(v.dados[0])}</span><span>${faceDado(v.dados[1])}</span><b>= ${v.dados[0]+v.dados[1]} casas</b></div>`;
+}
+function jogo(){
+  const v = S.jogo, s = S.sala;
+  if (!v || !s) return `<p class="sub">Carregando…</p>`;
+  if (v.fase === "fim") return fimDeJogo();
+  const euVez = v.vez_de === v.voce, eu = v.jogadores.find(j=>j.nome===v.voce);
+  const eliminado = eu && eu.eliminado;
+  const opcoes = new Set(v.opcoes_movimento);
+  const naRua = eu && eu.posicao.startsWith("rua:");
+  if (S.alvo && !(euVez && v.fase==="mover" && opcoes.has(S.alvo))) S.alvo = null;
+  const alvoAtual = !!S.alvo, caminhoPrev = alvoAtual ? caminhoAte(s, v, S.alvo) : [];
+
+  let acao = "";
+  if (eliminado) acao = `<p class="sub">Você saiu do jogo, mas continua ajudando a refutar palpites.</p>`;
+  else if (v.fase==="refutando" && v.aguardando_carta_de===v.voce){
+    acao = `<h2>Mostre uma carta</h2><p><small>${esc(v.palpite_atual.jogador)} palpitou ${esc(v.palpite_atual.suspeito)}, ${esc(v.palpite_atual.local)}, ${esc(v.palpite_atual.arma)}.</small></p>
+      <div class="opt">${v.cartas_que_pode_mostrar.map(c=>`<button onclick="enviar({tipo:'mostrar',carta:${JSON.stringify(c).replace(/"/g,"&quot;")}})">${esc(c)}</button>`).join("")}</div>`;
+  } else if (v.fase==="refutando") acao = `<p class="sub">Aguardando ${esc(v.aguardando_carta_de)} mostrar uma carta…</p>`;
+  else if (!euVez) acao = `${v.dados&&Date.now()<S.rolando?dadosHtml(v):""}<p class="sub">Vez de ${esc(v.vez_de)}…</p>`;
+  else if (v.fase==="rolar") acao = `<p>Role os dois dados. O número que sair é quantas casas você pode andar.</p>
+      <div class="stack"><button class="main" onclick="enviar({tipo:'rolar'})">🎲 Rolar os dados</button>
+      ${v.tem_atalho?`<button onclick="enviar({tipo:'atalho'})">🕳️ Usar a passagem secreta</button>`:""}
+      <button class="ghost" onclick="enviar({tipo:'encerrar'})">Passar a vez</button></div>`;
+  else if (v.fase==="mover") acao = `${dadosHtml(v)}<p>Toque numa <b style="color:var(--red)">casa clara</b> do mapa: aparece o caminho. Toque de novo (ou no botão) para andar (${v.restantes < v.dados[0]+v.dados[1] ? `ainda dá para andar ${v.restantes}` : `até ${v.restantes} casas`}). Entrar em um local encerra o movimento.</p>
+      <div class="stack">
+      ${alvoAtual&&caminhoPrev.length?`<button class="main" onclick="mover(${JSON.stringify(S.alvo).replace(/"/g,"&quot;")})">✅ Ir para ${esc(S.alvo.startsWith("rua:")?"essa casa":S.alvo)} (${caminhoPrev.length} ${caminhoPrev.length===1?"casa":"casas"})</button>`:""}
+      ${naRua?`<button class="${alvoAtual?"":"main"}" onclick="enviar({tipo:'parar'})">✋ Parar aqui</button>`:""}
+      ${!naRua&&v.ultimo_palpite_local===eu.posicao?`<p><small>🚫 Você palpitou em ${esc(eu.posicao)} na última vez. Saia e palpite em outro local.</small></p>`:""}
+      ${!naRua&&v.ultimo_palpite_local!==eu.posicao?`<button onclick="mover(${JSON.stringify(eu.posicao).replace(/"/g,"&quot;")})">Ficar em ${esc(eu.posicao)} e palpitar</button>`:""}
+      <button class="ghost" onclick="enviar({tipo:'encerrar'})">Passar a vez</button></div>`;
+  else if (v.fase==="palpite") {
+    const bl = !!S.blefe, sus = s.cartas.suspeitos.filter(c=>bl||!ehVista(c)), arm = s.cartas.armas.filter(c=>bl||!ehVista(c));
+    if (!bl && S.sel.suspeito && ehVista(S.sel.suspeito)) S.sel.suspeito = null;
+    if (!bl && S.sel.arma && ehVista(S.sel.arma)) S.sel.arma = null;
+    acao = `<h2>Palpite em ${esc(eu.posicao)}</h2>
+      <button class="${bl?"main":"ghost"}" style="width:100%;margin-bottom:6px" onclick="S.blefe=!S.blefe;desenhar()">🎭 Blefe: ${bl?"LIGADO":"desligado"}</button>
+      ${bl?`<small>Blefe ligado: dá para usar suas cartas e as já vistas. Os outros não sabem que é blefe.</small>`:""}
+      <small>Suspeito</small><div class="opt">${sus.length?sus.map(c=>botaoSel("suspeito",c)).join(""):"<small>Todos já vistos. Desmarque algum no caderno.</small>"}</div>
+      <small>Arma</small><div class="opt">${arm.length?arm.map(c=>botaoSel("arma",c)).join(""):"<small>Todas já vistas. Desmarque alguma no caderno.</small>"}</div>
+      <div class="row"><button class="main" ${S.sel.suspeito&&S.sel.arma?"":"disabled"} onclick="palpitar()">Fazer palpite</button><button onclick="enviar({tipo:'encerrar'})">Encerrar vez</button></div>`;
+  }
+  else if (v.fase==="pos_palpite") acao = `${S.lembrando&&euVez?`<div class="lembra">⏰ Não esqueça de encerrar a sua jogada!</div>`:""}<div class="row"><button onclick="enviar({tipo:'encerrar'})" class="main ${S.lembrando&&euVez?"pisca":""}">Encerrar a vez</button></div>`;
+
+  const podeAcusar = euVez && !eliminado && ["rolar","mover","palpite","pos_palpite"].includes(v.fase);
+  const cartas = v.sua_mao.map(c=>`<span class="carta">${esc(c)}</span>`).join("") + v.cartas_publicas.map(c=>`<span class="carta pub" title="pública">${esc(c)}</span>`).join("");
+  const log = v.eventos.slice(-30).filter(e=>!(e.tipo==="carta_mostrada"&&e.jogador===v.voce)).map(e=>({t:textoEvento(e),e})).filter(x=>x.t).reverse()
+    .map(x=>`<p class="${x.e.tipo==="carta_revelada"||x.e.tipo==="carta_que_mostrei"?"eu":""}">${esc(x.t)}</p>`).join("");
+  const meuPeao = eu ? `${emojiDe(s, eu.personagem)} ${esc(eu.personagem)}` : "";
+
+  return painel() + avisoJuiz() + `<div class="bar ${euVez&&!eliminado?"minhavez":""}"><div class="vez">${euVez&&!eliminado?"🎯 <b>Sua vez!</b>":`Vez de <b>${esc(v.vez_de)}</b>`}</div><small>${S.prazo?`<span class="cron ${restamS()<=15?"pouco":""}" id="cron">⏱ ${fmtTempo(restamS())}</span>`:""}${v.dados&&["mover","palpite","pos_palpite","refutando"].includes(v.fase)?`🎲 ${v.dados[0]} + ${v.dados[1]} · `:""}Sala ${esc(s.codigo)}</small><button class="ghost somb" onclick="abrirTutorial()" aria-label="Como jogar">❓</button></div>
+  <small>Você é ${meuPeao}</small>
+  ${ultimaJogada(v, s)}
+  ${botaoVista()}<div class="mapa" data-rot>${desenhoTabuleiro(s, v)}</div>
+  <small class="leg"><span style="color:#f2f2f2">→ entrada</span> · <span style="color:var(--red)">→ saída</span> · 🕳️ passagem secreta</small>
+  <div class="card">${acao}</div>
+  <h2>Suas cartas</h2><div class="cartas">${cartas}</div>
+  <div class="row" style="margin-top:12px">${botaoPainel("caderno","📓 Caderno")}${botaoPainel("chat","💬 Chat")}${botaoPainel("palpites","🔎 Palpites")}</div>
+  ${podeAcusar?`<button style="width:100%;margin-top:8px" onclick="S.acusando=!S.acusando;desenhar()">⚖ Acusar</button>`:""}
+  ${S.acusando&&podeAcusar?acusacao():""}
+  <h2>Pistas e jogadas</h2><div class="card log">${log||"<small>Nada ainda.</small>"}</div>
+  <h2>Jogadores</h2>${s.anfitriao===S.nome&&v.jogadores.some(j=>j.bot)?velocidadeBots(s):""}<div class="card">${v.jogadores.map((j,i)=>`<div class="pl"><span><span class="pawn" style="display:inline-block;background:${CORES[i%8]};margin-right:8px">${emojiDe(s, j.personagem)}</span>${esc(j.nome)}<small> · ${esc(j.personagem)}</small>${j.eliminado?'<span class="tag">fora</span>':""}${j.bot?'<span class="tag">bot</span>':""}${!j.conectado&&!j.saiu?'<span class="tag">caiu</span>':""}</span><span>${j.num_cartas} cartas
+    ${!j.conectado&&!j.saiu&&j.nome!==v.voce?` <button style="min-height:30px;padding:2px 8px;font-size:12px" onclick="enviar({tipo:'remover_desconectado',nome:${JSON.stringify(j.nome).replace(/"/g,"&quot;")}})">remover</button>`:""}</span></div>`).join("")}</div>
+  <button class="ghost" style="width:100%" onclick="if(confirm(S.sala.anfitriao===S.nome?'Você é o anfitrião. Sair encerra a partida para todos. Continuar?':'Sair da partida? Você não poderá voltar.'))enviar({tipo:'sair_sala'})">${S.sala.anfitriao===S.nome?"Encerrar a partida":"Sair da partida"}</button>`;
+}
+function botaoSel(campo, c){
+  return `<button class="${S.sel[campo]===c?"on":""}" onclick="sel('${campo}',${JSON.stringify(c).replace(/"/g,"&quot;")})">${iconeMarca(c)}${campo==="suspeito"?emojiDe(S.sala,c)+" ":""}${esc(c)}${S.blefe&&((S.jogo&&S.jogo.sua_mao)||[]).includes(c)?` <span class="minha">🃏 sua</span>`:""}</button>`;
+}
+function acusacao(){
+  const s = S.sala;
+  const grupo = (campo, lista, rot)=>{
+    const ok = lista.filter(c=>!ehVista(c));
+    if (S.acus[campo] && ehVista(S.acus[campo])) S.acus[campo] = null;
+    return `<small>${rot}</small><div class="opt">${ok.length?ok.map(c=>`<button class="${S.acus[campo]===c?"on":""}" onclick="S.acus.${campo}=${JSON.stringify(c).replace(/"/g,"&quot;")};desenhar()">${iconeMarca(c)}${esc(c)}</button>`).join(""):"<small>Todas já vistas. Desmarque alguma no caderno.</small>"}</div>`;
+  };
+  const ok = S.acus.suspeito && S.acus.local && S.acus.arma;
+  return `<div class="card"><h2 style="margin-top:0">Acusação final</h2><small>Se errar, você sai do jogo. Cartas já vistas não aparecem.</small>
+    ${grupo("suspeito",s.cartas.suspeitos,"Quem")}${grupo("local",s.cartas.locais,"Onde")}${grupo("arma",s.cartas.armas,"Com o quê")}
+    <button class="main" style="width:100%" ${ok?"":"disabled"} onclick="acusar()">Acusar</button></div>`;
+}
+function caderno(){
+  const s = S.sala;
+  const bloco = (t, l)=>`<h2>${t}</h2>${l.map(c=>{
+    const {m, auto} = marcaDe(c), nome = JSON.stringify(c).replace(/"/g,"&quot;");
+    return `<div class="nb"><span>${esc(c)}${auto?` <small>(já sei)</small>`:""}</span><span class="bts">
+      <button class="${m==="vista"?"m-vista":""}" ${auto?"disabled":""} onclick="marcar(${nome},'vista')">👁 Vista</button>
+      <button class="${m==="suspeita"?"m-suspeita":""}" ${auto?"disabled":""} onclick="marcar(${nome},'suspeita')">❓ Suspeita</button>
+      <button class="${m==="pensar"?"m-pensar":""}" ${auto?"disabled":""} onclick="marcar(${nome},'pensar')">💭 Pensando</button></span></div>`;}).join("")}`;
+  return `<div class="card"><h2 style="margin-top:0">Caderno do detetive</h2><small><b>Vista</b>: some do palpite e da acusação. <b>Suspeita</b> e <b>Pensando</b>: só marcam. Suas cartas e as que mostraram para você já entram sozinhas.</small>${bloco("Suspeitos",s.cartas.suspeitos)}${bloco("Locais",s.cartas.locais)}${bloco("Armas",s.cartas.armas)}</div>`;
+}
+
+/* ------------------------------------------- painéis (caderno, chat, palpites) */
+function resumoPalpites(){
+  const v = S.jogo, ev = v.eventos, lista = [];
+  let atual = null;
+  for (const e of ev){
+    if (e.tipo === "palpite"){ atual = {n:e.n, jogador:e.jogador, suspeito:e.suspeito, local:e.local, arma:e.arma, resp:[]}; lista.push(atual); }
+    else if (!atual) continue;
+    else if (e.tipo === "sem_carta") atual.resp.push(`${e.jogador}: não tinha nenhuma`);
+    else if (e.tipo === "carta_mostrada") { if (e.jogador !== v.voce) atual.resp.push(`${e.jogador} mostrou uma carta${e.para === v.voce ? "" : " para " + e.para}`); }
+    else if (e.tipo === "carta_que_mostrei") atual.resp.push(`🃏 Você mostrou: ${e.carta} para ${e.para}`);
+    else if (e.tipo === "carta_revelada") atual.resp.push(`👁 Você viu: ${e.carta}`);
+    else if (e.tipo === "ninguem_refutou") atual.resp.push("Ninguém refutou!");
+    else if (e.tipo === "vez_de") atual = null;
+  }
+  return lista.reverse();
+}
+function painel(){
+  if (!S.painel) return "";
+  const emJogo = S.tela === "jogo" && S.jogo, abas = emJogo ? ["caderno","chat","palpites"] : ["chat"];
+  if (!abas.includes(S.painel)) S.painel = "chat";
+  const rot = {caderno:"📓 Caderno", chat:"💬 Chat", palpites:"🔎 Palpites"}, cls = {caderno:"cad", chat:"chat", palpites:"pal"}[S.painel];
+  let corpo = "";
+  if (S.painel === "caderno") corpo = caderno();
+  else if (S.painel === "palpites"){
+    const l = resumoPalpites();
+    corpo = `<h2 style="margin-top:0">Palpites da partida</h2>` + (l.length ? l.map(p=>`<div class="card"><div class="quem"><b>${p.jogador === S.jogo.voce ? "Você" : esc(p.jogador)}</b> palpitou</div>
+      <div class="trio" style="margin:8px 0"><span>${esc(p.suspeito)}</span><span>📍 ${esc(p.local)}</span><span>🔪 ${esc(p.arma)}</span></div>
+      ${p.resp.map(r=>`<small style="display:block">• ${esc(r)}</small>`).join("")}</div>`).join("") : "<div class='card'><small>Ninguém palpitou ainda.</small></div>");
+  } else {
+    const lista = (S.sala.chat || []), fr = S.sala.frases || [];
+    corpo = `<h2 style="margin-top:0">Chat rápido</h2><div class="card" style="min-height:120px">${lista.length ? lista.map(c=>`<div class="bolha ${c.de===S.nome?"eu":""}"><b>${c.de===S.nome?"Você":esc(c.de)}</b>${esc(fr[c.i]||"")}</div>`).join("") : "<small>Nenhuma mensagem. Toque numa frase abaixo.</small>"}</div>
+      <small>Toque para enviar:</small><div class="frases">${fr.map((f,i)=>`<button onclick="falar(${i})">${esc(f)}</button>`).join("")}</div>`;
+    S.chatLido = S.chatVisto || 0;
+  }
+  const nav = abas.length > 1 ? abas.map(a=>`<button class="${a===S.painel?"on":""}" onclick="abrirPainel('${a}')">${rot[a]}</button>`).join("") : `<b style="flex:1;font-size:18px">${rot[S.painel]}</b>`;
+  return `<div class="painel ${cls}" id="painel"><div class="in"><div class="pnav">${nav}<button class="x" onclick="fecharPainel()" aria-label="Voltar ao jogo">✕ ${emJogo?"Jogo":"Fechar"}</button></div>${corpo}</div></div>`;
+}
+function abrirPainel(p){ S.painel = p; desenhar(); const el = document.getElementById("painel"); if (el) el.scrollTop = 0; }
+function fecharPainel(){ S.painel = null; desenhar(); }
+function falar(i){ enviar({tipo:"chat", i}); }
+const naoLidas = () => Math.max(0, ((S.sala && S.sala.chat) || []).filter(c => c.n > (S.chatLido || 0) && c.de !== S.nome).length);
+const botaoPainel = (p, rot) => `<button class="pbtn" onclick="abrirPainel('${p}')">${rot}${p==="chat"&&naoLidas()?`<span class="nv">${naoLidas()}</span>`:""}</button>`;
+
+function fimDeJogo(){
+  const v = S.jogo, s = S.sala, venceu = v.vencedor === v.voce, ev = v.eventos, souDono = s.anfitriao === S.nome;
+  const conta = (tipo, nome) => ev.filter(e => e.tipo === tipo && e.jogador === nome).length;
+  const jogadas = ev.filter(e => e.tipo === "dados").length;
+  const linhas = v.jogadores.map(j => {
+    const res = j.nome === v.vencedor ? "🏆" : (ev.some(e => e.tipo === "acusacao_errada" && e.jogador === j.nome) ? "❌ acusou errado" : (j.saiu || j.eliminado ? "saiu" : "—"));
+    return `<tr><td>${emojiDe(s, j.personagem)} ${esc(j.nome)}${j.nome===v.voce?" (você)":""}</td><td>${conta("palpite", j.nome)}</td><td>${conta("carta_mostrada", j.nome)}</td><td>${res}</td></tr>`;
+  }).join("");
+  const maisPal = [...v.jogadores].sort((a, b) => conta("palpite", b.nome) - conta("palpite", a.nome))[0];
+  const totalPal = ev.filter(e => e.tipo === "palpite").length;
+  return painel() + `<div class="fim"><h1>${venceu?"Caso resolvido!":"Caso encerrado"}</h1>
+  <div class="big">${v.vencedor?`${esc(v.vencedor)} ${venceu?"(você) ":""}venceu`:"Ninguém resolveu"}</div>
+  <div class="card"><small>A verdade</small><div class="trio" style="justify-content:center;margin-top:8px">${v.solucao?`<span>${emojiDe(s, v.solucao[0])} ${esc(v.solucao[0])}</span><span>📍 ${esc(v.solucao[1])}</span><span>🔪 ${esc(v.solucao[2])}</span>`:""}</div></div>
+  <div class="card" style="text-align:left"><h2 style="margin-top:0">Resumo da partida</h2>
+    <small>${jogadas} ${jogadas===1?"jogada":"jogadas"} · ${totalPal} ${totalPal===1?"palpite":"palpites"}${totalPal && maisPal ? ` · quem mais palpitou: ${esc(maisPal.nome)}` : ""}</small>
+    <table class="res"><tr><th>Jogador</th><th>Palpites</th><th>Cartas mostradas</th><th>Resultado</th></tr>${linhas}</table></div>
+  ${souDono ? `<button class="main" style="width:100%;margin-bottom:8px" onclick="enviar({tipo:'revanche'})">🔁 Jogar de novo (revanche)</button>` : `<p class="sub">Se ${esc(s.anfitriao)} quiser, a revanche começa aqui.</p>`}
+  <div class="row" style="margin-bottom:8px">${botaoPainel("chat","💬 Chat")}${botaoPainel("palpites","🔎 Palpites")}</div>
+  <button class="ghost" style="width:100%" onclick="enviar({tipo:'sair_sala'})">Voltar ao menu</button></div>`;
+}
+
+/* ------------------------------------------- lembrete de encerrar a jogada */
+let lembreteTimer = null, lembreteChave = "";
+function agendarLembrete(){
+  const v = S.jogo, ativo = !!v && v.vez_de === v.voce && v.fase === "pos_palpite", chave = ativo ? v.eventos.length + ":" + v.fase : "";
+  if (chave === lembreteChave) return;
+  lembreteChave = chave; clearTimeout(lembreteTimer); S.lembrando = false;
+  if (!ativo) return;
+  let vezes = 0;
+  const bater = () => {
+    const w = S.jogo; if (!(w && w.vez_de === w.voce && w.fase === "pos_palpite")) return;
+    S.lembrando = true; Som.lembrete(); vibrar(); avisar("vez", "⏰ Encerre a sua jogada", "Toque em “Encerrar a vez” para passar para o próximo."); desenhar();
+    if (++vezes < 3) lembreteTimer = setTimeout(bater, 25000);
+  };
+  lembreteTimer = setTimeout(bater, 20000);
+}
+
+/* ----------------------------------------------------------------- tutorial */
+const PASSOS_TUT = [
+  {ic:"🔎", t:"O crime", p:"Alguém cometeu um crime. Descubra QUEM foi, ONDE e COM QUÊ. Ganha quem acusar certo."},
+  {ic:"🎲", t:"Sua vez", p:"Role os 2 dados. Você anda essa quantidade de casas. Casas claras: pode ir. Casas escuras: não pode."},
+  {ic:"👆", t:"Andar", p:"Toque numa casa clara: aparece o caminho. Toque de novo para andar. Entrar num local termina o movimento."},
+  {ic:"🗺", t:"O mapa", p:"Arraste para girar e inclinar. Pinça para aproximar. Botões: 🎯 seu peão, 🗺 mapa todo, 🌙 noite."},
+  {ic:"🕵", t:"Palpite", p:"Dentro de um local, escolha suspeito e arma. Os outros mostram uma carta se tiverem. O suspeito vai para o local."},
+  {ic:"📓", t:"Caderno", p:"Marque as cartas: Vista, Suspeita, Pensando. As vistas somem das opções. Chat e palpites ficam nos botões."},
+  {ic:"⚖", t:"Acusação", p:"Tem certeza? Acuse! Se acertar, você vence. Se errar, sai do jogo. Boa sorte, detetive!"},
+];
+function tutorialHtml(){
+  if (S.tut == null) return "";
+  const i = S.tut, p = PASSOS_TUT[i], ult = i === PASSOS_TUT.length - 1;
+  return `<div class="tut" role="dialog" aria-label="Como jogar"><div class="cx"><div class="ic">${p.ic}</div><h2>${p.t}</h2><p>${p.p}</p>
+    <div class="pts">${PASSOS_TUT.map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</div>
+    <div class="row">${i > 0 ? `<button onclick="passoTutorial(-1)">← Voltar</button>` : `<button class="ghost" onclick="fecharTutorial()">Pular</button>`}<button class="main" onclick="${ult ? "fecharTutorial()" : "passoTutorial(1)"}">${ult ? "Entendi!" : "Próximo →"}</button></div></div></div>`;
+}
+function abrirTutorial(){ S.tut = 0; desenhar(); }
+function passoTutorial(d){ S.tut = Math.max(0, Math.min(PASSOS_TUT.length - 1, (S.tut || 0) + d)); desenhar(); }
+function fecharTutorial(){ S.tut = null; guardar("detetive_tut", "1"); desenhar(); }
+
+/* ----------------------------------------------------- atualização do app */
+function bannerAtualizacao(){
+  const a = S.atual;
+  if (!a) return "";
+  const prog = S.atualizando ? (S.pct != null && S.pct >= 0 ? `Baixando… ${S.pct}%` : "Baixando…") : "⬇ Atualizar agora";
+  return `<div class="card" style="border-color:var(--red)"><b>🔄 Nova versão ${esc(a.versao)}</b>
+    ${a.notas ? `<div><small>${esc(a.notas).replace(/\n/g,"<br>")}</small></div>` : ""}
+    ${S.erroAtual ? `<div class="err">${esc(S.erroAtual)}</div>` : ""}
+    <button class="main" style="width:100%;margin-top:8px" ${S.atualizando?"disabled":""} onclick="atualizarApp()">${prog}</button></div>`;
+}
+function atualizarApp(){ S.atualizando = true; S.pct = null; S.erroAtual = ""; desenhar(); window.AndroidApp.instalar(S.atual.url); }
+window.__atualizacao = o => { S.atual = o; desenhar(); };
+window.__progressoAtualizacao = p => { S.pct = p; desenhar(); };
+window.__fimAtualizacao = erro => { S.atualizando = false; S.erroAtual = erro || ""; desenhar(); };
+
+/* ----------------------------------------------------------- ações */
+function aba(a){ S.aba = a; S.erro = ""; desenhar(); }
+function entrarConta(){ S.erro=""; enviar({tipo:"entrar", usuario:val("usuario"), senha:val("senha")}); }
+function cadastrar(){ S.erro=""; enviar({tipo:"registrar", usuario:val("usuario"), senha:val("senha")}); }
+function entrarConvidado(){ S.erro=""; enviar({tipo:"convidado", apelido:val("apelido")}); }
+function entrarSala(){ S.erro=""; enviar({tipo:"entrar_sala", codigo:val("codigo")}); }
+function sair(){ S.erro = ""; enviar({tipo:"sair_conta"}); }
+function mover(d){ S.erro=""; S.alvo=null; enviar({tipo:"mover", destino:d}); }
+function sel(campo, c){ S.sel[campo]=c; desenhar(); }
+function assumir(){ if (!confirm("Assumir a partida? Seu celular passa a ser o juiz e precisa ficar com o app aberto.")) return; enviar({tipo:"assumir"}); }
+function palpitar(){ enviar({tipo:"palpitar", suspeito:S.sel.suspeito, arma:S.sel.arma}); S.sel={suspeito:null,arma:null}; S.blefe=false; }
+function acusar(){
+  const a = S.acus;
+  if (!confirm(`Acusar ${a.suspeito}, em ${a.local}, com ${a.arma}? Se errar, você sai do jogo.`)) return;
+  enviar({tipo:"acusar", suspeito:a.suspeito, local:a.local, arma:a.arma});
+  S.acusando = false; S.acus = {suspeito:null,local:null,arma:null};
+}
+function marcar(c, m){
+  if (marcaDe(c).auto) return;
+  const novo = Object.assign({}, S.caderno), atual = marcaDe(c).m;
+  if (atual === m) delete novo[c]; else novo[c] = m;
+  S.caderno = novo; desenhar();
+  enviar({tipo:"caderno", marcas:novo});
+}
+
+window.__receberDoServidor = m => receber(typeof m === "string" ? JSON.parse(m) : m);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && T && S.nome && !S.sala) T.enviar({tipo:"retomar"}); });
+try { lerConvite(new URLSearchParams(location.search).get('sala')); } catch(e){}
+conectar(); desenhar(); window.__verConvite();
+if (window.AndroidApp) { try { window.AndroidApp.verificar(); } catch(e){} }
+</script>
+</body>
+</html>

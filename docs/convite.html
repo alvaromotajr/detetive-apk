@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0d0d"><title>Convite - Detetive</title>
+<style>
+body{margin:0;background:#0d0d0d;color:#e6e6e6;font:17px/1.45 Georgia,serif;padding:24px 16px;text-align:center}
+.c{max-width:420px;margin:0 auto}h1{margin:.2em 0}.cod{font-size:34px;letter-spacing:.25em;border:2px dashed #e24b4a;border-radius:10px;padding:10px;margin:14px 0}
+a.b{display:block;margin:12px 0;padding:15px;border-radius:10px;background:#262626;color:#e6e6e6;text-decoration:none;border:1px solid #3a3a3a}
+a.b.main{background:#e24b4a;color:#fff;border-color:#e24b4a;font-weight:700}small{color:#9a9a9a}
+</style></head><body><div class="c">
+<div style="font-size:48px">🔎</div><h1>Você foi convidado!</h1><p>Jogue Detetive com seus amigos. Código da sala:</p>
+<div class="cod" id="cod">-----</div>
+<div id="android"><a class="b main" id="entrar">🚪 Entrar na sala (app instalado)</a>
+<a class="b" href="https://github.com/alvaromotajr/detetive-apk/releases/latest">⬇ Baixar o aplicativo (Android)</a><small>Depois de instalar, volte aqui e toque em "Entrar na sala".</small></div>
+<div id="outros"><a class="b main" id="web">🌐 Jogar no navegador (iPhone ou outro)</a>
+<small>No iPhone: abra no Safari, entre na sala e toque em Compartilhar → Adicionar à Tela de Início.</small></div>
+</div>
+<script>
+const q = new URLSearchParams(location.search), cod = (q.get("sala") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+document.getElementById("cod").textContent = cod || "-----";
+const android = /Android/i.test(navigator.userAgent), iphone = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+document.getElementById("android").style.display = iphone ? "none" : "";
+document.getElementById("web").href = "./?sala=" + cod;
+const volta = encodeURIComponent("https://github.com/alvaromotajr/detetive-apk/releases/latest");
+document.getElementById("entrar").href = android
+  ? `intent://sala/${cod}#Intent;scheme=detetive;package=com.alvaro.detetive;S.browser_fallback_url=${volta};end`
+  : `detetive://sala/${cod}`;
+</script></body></html>
