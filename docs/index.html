@@ -136,7 +136,7 @@ table.res{width:100%;border-collapse:collapse;font-size:14px}table.res td,table.
 const $app = document.getElementById("app");
 const CORES = ["#e6e6e6","#e24b4a","#c9a93b","#7fb6d9","#8fc98f","#c28fd9","#e8a06a","#9a9a9a"];
 
-const VERSAO_WEB = "0.10.0";
+const VERSAO_WEB = "0.11.0";
 const S = { convite:null, ativa:null, querAbrir:false, fundo:false, cutucada:null, cutucouEm:0, tema:"escuro", juizSeg:0, tela:"login", aba:"entrar", erro:"", iniciando:true, juizOffline:false, conectado:false, nome:null,
   convidado:false, sala:null, jogo:null, caderno:{}, historico:null, cadernoAberto:false,
   atual:null, atualizando:false, pct:null, erroAtual:"", sel:{suspeito:null, arma:null}, acusando:false, acus:{suspeito:null, local:null, arma:null}, ultimoVi:0, vistoN:null, servico:false, vista3d:false, ang:45, elev:32, zoom:1, foco:null, alvo:null, painel:null, chatLido:0, chatVisto:null, som:true, noite:false, fixo:false, blefe:false, lembrando:false, rolando:0, anim:null, prazo:null, tut:null };
@@ -270,12 +270,68 @@ function novidadesChat(m){
   if (S.painel === "chat") S.chatLido = maxN;
   if (novas.length){ const u = novas[novas.length - 1]; avisar("jogada", `💬 ${u.de}`, (m.frases || [])[u.i] || ""); Som.chat(); }
 }
-function avisar(tipo, titulo, texto){ if (Object.keys(R).length > 1 && S.ativa) titulo += " · " + S.ativa; try { if (window.AndroidApp && window.AndroidApp.notificar) window.AndroidApp.notificar(tipo, titulo, texto); } catch(e){} }
+function avisar(tipo, titulo, texto){
+  if (Object.keys(R).length > 1 && S.ativa) titulo += " · " + S.ativa;
+  try { if (window.AndroidApp && window.AndroidApp.notificar) { window.AndroidApp.notificar(tipo, titulo, texto); return; } } catch(e){}
+  avisoWeb(titulo, texto);
+}
+/* Navegador/iPhone: aviso só funciona com a página viva em segundo plano (sem servidor de push). */
+function avisoWeb(titulo, texto){
+  try {
+    if (!("Notification" in window) || Notification.permission !== "granted" || !document.hidden) return;
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(r => r.showNotification(titulo, {body:texto, icon:"icone-192.png", tag:"detetive", renotify:true, vibrate:[120,80,120]}));
+    else new Notification(titulo, {body:texto});
+  } catch(e){}
+}
+const ehIphone = /iPhone|iPad|iPod/i.test(navigator.userAgent), ehInstalado = (() => { try { return window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches; } catch(e){ return false; } })();
+function ativarAvisosWeb(){ try { Notification.requestPermission().then(() => desenhar()); } catch(e){ S.erro = "Este navegador não permite avisos."; desenhar(); } }
+try { if (!window.AndroidApp && "serviceWorker" in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {}); } catch(e){}
+
+/* ----- Android: guia de liberações para o app continuar avisando em segundo plano ----- */
+const temApp = () => !!(window.AndroidApp && window.AndroidApp.permissoes);
+function lerPerm(){ try { return temApp() ? JSON.parse(window.AndroidApp.permissoes()) : null; } catch(e){ return null; } }
+function faltaLiberar(pm){ return !!pm && (!pm.notif || !pm.bateria || (pm.auto && ler("detetive_auto") !== "1")); }
+function abrirGuia(){ S.perm = lerPerm(); S.guia = true; desenhar(); }
+function fecharGuia(){ S.guia = false; guardar("detetive_guia", "1"); desenhar(); }
+function liberar(qual){
+  try {
+    if (qual === "notif") window.AndroidApp.pedirNotificacoes();
+    else if (qual === "bateria") window.AndroidApp.pedirBateria();
+    else if (qual === "auto") window.AndroidApp.abrirAutoinicio();
+  } catch(e){}
+}
+function jaFizAuto(){ guardar("detetive_auto", "1"); S.perm = lerPerm(); desenhar(); }
+function guiaHtml(){
+  if (!S.guia) return "";
+  const pm = S.perm || lerPerm() || {}, ok = v => v ? `<b style="color:#2e9e5b">✓ Liberado</b>` : "";
+  const passo = (n, tit, desc, feito, botao) => `<div class="card" style="text-align:left;margin:8px 0"><b>${n}. ${tit}</b> ${feito}<br><small>${desc}</small>${feito ? "" : botao}</div>`;
+  return `<div class="tut" role="dialog" aria-label="Avisos em segundo plano"><div class="cx" style="max-height:92vh;overflow:auto">
+    <div class="ic">🔔</div><h2>Receber avisos com o app em segundo plano</h2>
+    <p style="font-size:16px;margin:6px 0 10px">Para o Detetive avisar a sua vez, libere:</p>
+    ${passo(1, "Notificações", "Permite mostrar o aviso de &quot;sua vez&quot;.", ok(pm.notif), `<button class="main" style="width:100%;margin-top:6px" onclick="liberar('notif')">Liberar</button>`)}
+    ${passo(2, "Bateria sem restrição", "O Android não vai &quot;dormir&quot; o jogo.", ok(pm.bateria), `<button class="main" style="width:100%;margin-top:6px" onclick="liberar('bateria')">Liberar</button>`)}
+    ${pm.auto ? passo(3, "Início automático (" + esc(pm.marca || "seu celular") + ")", "No seu celular essa opção fica nos ajustes. Procure o Detetive e permita &quot;iniciar automaticamente&quot; / &quot;sem restrições&quot;.", ler("detetive_auto") === "1" ? ok(true) : "", `<div class="row" style="margin-top:6px"><button onclick="liberar('auto')">Abrir ajustes</button><button class="main" onclick="jaFizAuto()">Já fiz</button></div>`) : ""}
+    <small>Só usado enquanto você está em uma sala. Ao voltar dos ajustes, a lista se atualiza.</small>
+    <button class="main" style="width:100%;margin-top:12px" onclick="fecharGuia()">${faltaLiberar(pm) ? "Agora não" : "Pronto"}</button></div></div>`;
+}
+function cartaoAvisos(){
+  if (temApp()){
+    const pm = lerPerm() || {};
+    return `<h2>Avisos em segundo plano</h2><div class="card stack"><small>Notificações: <b>${pm.notif ? "✓ liberadas" : "✗ falta liberar"}</b><br>Bateria sem restrição: <b>${pm.bateria ? "✓ liberada" : "✗ falta liberar"}</b>${pm.auto ? "<br>Início automático: confira nos ajustes" : ""}</small>
+      <button onclick="abrirGuia()">Configurar avisos</button><small>Dica: use o botão Voltar (não deslize o app para fora das recentes) para o jogo continuar avisando.</small></div>`;
+  }
+  const perm = ("Notification" in window) ? Notification.permission : "indisponivel";
+  return `<h2>Avisos</h2><div class="card stack">
+    ${ehIphone && !ehInstalado ? `<small>📱 <b>iPhone:</b> toque em Compartilhar → <b>Adicionar à Tela de Início</b> e abra o jogo por esse ícone. Só assim o iPhone permite avisos.</small>` : ""}
+    ${perm === "granted" ? `<small>✓ Avisos ligados neste navegador.</small>` : perm === "denied" ? `<small>Os avisos estão bloqueados. Libere nas configurações do navegador.</small>` : perm === "default" ? `<button onclick="ativarAvisosWeb()">🔔 Ativar avisos neste navegador</button>` : `<small>Este navegador não mostra avisos.</small>`}
+    <small>⚠ No navegador e no iPhone os avisos só chegam enquanto o jogo está aberto em segundo plano. Fechado de vez, não avisa. Para avisos mais confiáveis, use o app Android.</small></div>`;
+}
 function vibrar(){ try { if (navigator.vibrate) navigator.vibrate([120, 80, 120]); } catch(e){} }
-function criarSalaBateria(){ pedirAbrir(); try { if (window.AndroidApp && window.AndroidApp.pedirBateria) window.AndroidApp.pedirBateria(); } catch(e){} enviar({tipo:'criar_sala'}); }
+function criarSalaBateria(){ pedirAbrir(); enviar({tipo:'criar_sala'}); }
 function servicoPartida(ativo){
   if (S.servico === ativo) return; S.servico = ativo;
   try { if (window.AndroidApp && window.AndroidApp.partida) window.AndroidApp.partida(ativo); } catch(e){}
+  if (ativo && temApp() && ler("detetive_guia") !== "1" && faltaLiberar(lerPerm())){ S.perm = lerPerm(); S.guia = true; setTimeout(desenhar, 0); }
 }
 /* Compara o que chegou com o que já se sabia e avisa: vez de jogar, palpites dos outros, cartas vistas. */
 function processarNovidades(v){
@@ -316,7 +372,7 @@ function desenhar(){
   const valores = {};
   document.querySelectorAll("input").forEach(i => valores[i.id] = i.value);
   const pEl = document.getElementById("painel"), pTop = pEl ? pEl.scrollTop : 0;
-  $app.innerHTML = bannerAtualizacao() + f() + (S.erro ? `<div class="err" role="alert">${esc(S.erro)}</div>` : "") + tutorialHtml();
+  $app.innerHTML = bannerAtualizacao() + f() + (S.erro ? `<div class="err" role="alert">${esc(S.erro)}</div>` : "") + tutorialHtml() + guiaHtml();
   document.querySelectorAll("input").forEach(i => { if (valores[i.id] != null) i.value = valores[i.id]; });
   const pNovo = document.getElementById("painel"); if (pNovo && pTop) pNovo.scrollTop = pTop;
   if (foco){ const el = document.getElementById(foco); if (el && el.tagName==="INPUT") el.focus(); }
@@ -398,6 +454,7 @@ function config(){
     <button class="${t==="claro"?"on":""}" onclick="escolherTema('claro')">☀️ Claro</button>
     <button class="${t==="auto"?"on":""}" onclick="escolherTema('auto')">📱 Automático</button></div>
     <small>Automático segue o tema do celular.</small></div>
+  ${cartaoAvisos()}
   <h2>Som</h2><div class="card"><button style="width:100%" onclick="alternarSom()">${S.som ? "🔊 Som ligado" : "🔇 Som desligado"}</button></div>
   <h2>Ajuda</h2><div class="card stack"><button onclick="abrirTutorial()">❓ Ver o tutorial</button></div>
   <h2>Conta</h2><div class="card stack"><small>Entrou como <b>${esc(S.nome)}</b></small><button class="ghost" onclick="if(confirm('Sair da conta? Você sai de todas as salas.'))sair()">Sair da conta</button></div>
@@ -1027,7 +1084,7 @@ function marcar(c, m){
 }
 
 window.__receberDoServidor = m => receber(typeof m === "string" ? JSON.parse(m) : m);
-document.addEventListener("visibilitychange", () => { if (!document.hidden && T && S.nome) T.enviar({tipo:"retomar"}); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden){ if (S.guia){ S.perm = lerPerm(); desenhar(); } if (T && S.nome) T.enviar({tipo:"retomar"}); } });
 try { lerConvite(new URLSearchParams(location.search).get('sala')); } catch(e){}
 aplicarTema(); conectar(); desenhar(); window.__verConvite();
 if (window.AndroidApp) { try { window.AndroidApp.verificar(); } catch(e){} }
