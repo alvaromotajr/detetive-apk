@@ -113,7 +113,7 @@
     escutarPresenca(codigo, cb) {
       let primeira = true;
       return sala(codigo).collection("presenca").onSnapshot(snap => {
-        snap.docChanges().forEach(c => { if (c.type !== "removed") cb(c.doc.id, ms(c.doc.data().t), primeira); });
+        snap.docChanges().forEach(c => { if (c.type !== "removed") cb(c.doc.id, ms(c.doc.data().t), primeira, c.doc.data().token || ""); });
         primeira = false;
       });
     },
@@ -133,7 +133,7 @@
         cb(out);
       });
     },
-    presenca(codigo, uid) { return sala(codigo).collection("presenca").doc(uid).set({ t: agora() }).catch(() => {}); },
+    presenca(codigo, uid, token) { return sala(codigo).collection("presenca").doc(uid).set(token ? { t: agora(), token: String(token).slice(0, 400) } : { t: agora() }).catch(() => {}); },
 
     /* ------------------------------------------------------- histórico */
     registrarPartida(uid, codigo, dados) {

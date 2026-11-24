@@ -23,6 +23,7 @@
       this.relogio = o.relogio || (() => Date.now());
       this._enviar = (uid, msg) => { if (!String(uid).startsWith("bot:")) o.enviar(uid, msg); };   // bots não têm caixa de saída
       this._agenda = o.agenda || ((f) => f()); this.atrasoBot = o.atrasoBot == null ? 1500 : o.atrasoBot; this._botPendente = false;
+      this._push = o.push || (() => {}); this._chavePush = null;
       this._salvar = o.salvar || (() => {}); this._aoEncerrar = o.aoEncerrar || (() => {});
       this.rng = o.rng || null;
       this.membros = new Map();      // nome -> { nome, uid, visto, saiu }
@@ -73,8 +74,31 @@
       for (const info of v.jogadores) { const m = this.membros.get(info.nome); info.conectado = this._online(m); info.saiu = m.saiu; info.bot = !!m.bot; }
       return v;
     }
+    /* Quem deve ser avisado por push (app fechado): a vez, a carta a mostrar e o fim do caso. */
+    _chaveAtual() { const g = this.jogo; return g ? JSON.stringify([g.fase === Fase.FIM ? null : g.jogadorDaVez, g.fase === Fase.REFUTANDO ? g.refutador : null, g.fase === Fase.FIM]) : null; }
+    _avisarPush() {
+      const g = this.jogo, chave = this._chaveAtual();
+      if (!g || chave === this._chavePush) return;
+      this._chavePush = chave;
+      const alvo = n => { const m = this.membros.get(n); return m && !m.bot && !m.saiu && m.uid !== this.uidAnfitriao ? m.uid : null; };
+      const sala = this.codigo ? ` · ${this.codigo}` : "";
+      try {
+        if (g.fase === Fase.FIM) {
+          const todos = [...this.membros.values()].filter(m => !m.bot && !m.saiu && m.uid !== this.uidAnfitriao).map(m => m.uid);
+          if (todos.length) this._push(todos, { tipo: "jogada", titulo: "Caso encerrado" + sala, texto: g.vencedor ? `${g.vencedor} venceu.` : "Ninguém resolveu." });
+          return;
+        }
+        if (g.fase === Fase.REFUTANDO && alvo(g.refutador) && g.palpite) {
+          const p = g.palpite;
+          this._push([alvo(g.refutador)], { tipo: "vez", titulo: "🃏 Mostre uma carta" + sala, texto: `${p.jogador} palpitou: ${p.suspeito}, ${p.local}, ${p.arma}.` });
+          return;
+        }
+        if (g.fase !== Fase.REFUTANDO && alvo(g.jogadorDaVez)) this._push([alvo(g.jogadorDaVez)], { tipo: "vez", titulo: "🎯 É a sua vez!" + sala, texto: "Role os dados e ande pelo mapa." });
+      } catch (e) { /* push é um extra */ }
+    }
     _transmitirJogo() {
       if (!this.jogo) return;
+      this._avisarPush();
       for (const m of this.membros.values()) {
         if (m.saiu && !(m.nome in this.jogo.maos)) continue;
         if (m.nome in this.jogo.maos && !m.saiu) this._emitir(m.uid, { tipo: "jogo", visao: this._visao(m.nome) });
@@ -342,6 +366,7 @@
       if (falta > 0) throw new ErroJogo(`Espere ${Math.ceil(falta / 1000)}s para cutucar de novo.`);
       this.cutucou.set(uid, this.relogio()); this.cutucaN = (this.cutucaN || 0) + 1;
       this._enviar(alvo.uid, { tipo: "cutucada", de: m.nome, n: this.cutucaN });
+      this._push([alvo.uid], { tipo: "vez", titulo: `🔔 ${m.nome} te cutucou`, texto: "É a sua vez de jogar!" });
     }
     _chat(uid, msg) {
       const m = this._doUid(uid), i = msg.i;
@@ -397,6 +422,7 @@
       j.membros = new Map(o.membros.map(m => [m.nome, { ...m, visto: j.relogio() }]));
       j.jogo = o.jogo ? Jogo.restaurar(o.jogo, opcoes.rng || null) : null; j.cadernos = o.cadernos || {}; j.chat = o.chat || []; j.chatN = o.chatN || 0; j.tempoVez = o.tempoVez || 0; if (o.atrasoBot) { j.atrasoBot = o.atrasoBot; j._botsVelDefinida = true; }
       j._salvar = opcoes.salvar || (() => {}); j.ultimos.clear();
+      j._chavePush = j._chaveAtual();         // ao retomar, não repete o aviso da vez que já foi enviado
       return j;
     }
   }

@@ -46,6 +46,7 @@ button:disabled{opacity:.4}
 .pawn.eu{outline:2px solid var(--red)}.pawn.out{opacity:.35}
 .cartas{display:flex;flex-wrap:wrap;gap:6px}
 .carta{background:var(--tx);color:var(--bg);border-radius:6px;padding:7px 10px;font-size:14px}
+.minha.vista{background:#7fb6d9}
 .minha{background:#f5c542;color:#222;border-radius:5px;padding:1px 5px;font-size:11px;font-weight:700;margin-left:4px}
 .carta.pub{background:var(--p3);color:var(--tx)}
 .carta.sel{outline:3px solid var(--red)}
@@ -126,6 +127,7 @@ table.res{width:100%;border-collapse:collapse;font-size:14px}table.res td,table.
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="push-config.js"></script>
 <script src="predios.js"></script>
 <script src="motor.js"></script>
 <script src="juiz.js"></script>
@@ -136,7 +138,7 @@ table.res{width:100%;border-collapse:collapse;font-size:14px}table.res td,table.
 const $app = document.getElementById("app");
 const CORES = ["#e6e6e6","#e24b4a","#c9a93b","#7fb6d9","#8fc98f","#c28fd9","#e8a06a","#9a9a9a"];
 
-const VERSAO_WEB = "0.11.0";
+const VERSAO_WEB = "0.12.0";
 const S = { convite:null, ativa:null, querAbrir:false, fundo:false, cutucada:null, cutucouEm:0, tema:"escuro", juizSeg:0, tela:"login", aba:"entrar", erro:"", iniciando:true, juizOffline:false, conectado:false, nome:null,
   convidado:false, sala:null, jogo:null, caderno:{}, historico:null, cadernoAberto:false,
   atual:null, atualizando:false, pct:null, erroAtual:"", sel:{suspeito:null, arma:null}, acusando:false, acus:{suspeito:null, local:null, arma:null}, ultimoVi:0, vistoN:null, servico:false, vista3d:false, ang:45, elev:32, zoom:1, foco:null, alvo:null, painel:null, chatLido:0, chatVisto:null, som:true, noite:false, fixo:false, blefe:false, lembrando:false, rolando:0, anim:null, prazo:null, tut:null };
@@ -158,7 +160,7 @@ function conectar(){
   if (!configOk()){ S.iniciando = false; S.erro = "Falta configurar o Firebase (arquivo firebase-config.js). Veja o LEIA-ME."; return; }
   try {
     const nuvem = window.criarNuvem(window.firebase, window.FIREBASE_CONFIG);
-    T = window.criarTransporte({ nuvem, Juiz: window.Juiz.Juiz, aoReceber: receber, armazenar: armazenar() });
+    T = window.criarTransporte({ nuvem, Juiz: window.Juiz.Juiz, aoReceber: receber, armazenar: armazenar(), push: () => window.PUSH || null, token: () => { try { return (window.AndroidApp && window.AndroidApp.fcmToken) ? String(window.AndroidApp.fcmToken() || "") : ""; } catch(e){ return ""; } } });
     S.conectado = true; T.iniciar();
   } catch(e){ S.iniciando = false; S.erro = "Não foi possível iniciar o Firebase."; }
 }
@@ -361,7 +363,7 @@ function processarNovidades(v){
   if (minhaVez) sm = "vez";
   if (sm) Som[sm]();
   av.slice(-3).forEach(a => avisar(a[0], a[1], a[2]));
-  if (minhaVez) setTimeout(() => { if (S.jogo && S.sala && S.tela === "jogo" && S.jogo.vez_de === S.jogo.voce && S.jogo.fase !== "fim") focarMeuPeao(); }, 120);
+  if (minhaVez) setTimeout(() => { if (S.jogo && S.sala && S.tela === "jogo" && S.jogo.vez_de === S.jogo.voce && S.jogo.fase !== "fim" && !S.fundo) piscarPeao(); }, 250);
   if (minhaVez || (v.aguardando_carta_de === v.voce && (!prev || prev.aguardando_carta_de !== v.voce))) vibrar();
 }
 
@@ -695,9 +697,11 @@ function tabuleiro(s, v){
   }
   const desenhaPeao = ob => {
     const [j, i] = ob.peao, eu = j.nome === v.voce, vez = j.nome === v.vez_de && v.fase !== "fim";
+    if (eu && S.pisca === "off") return "";                      // piscando: some por um instante
     if (S.anim && S.anim.nome === j.nome) { const q = posicaoAnim(S.anim); if (q) { ob = {...ob, wx: q[0], wy: q[1], wz: q[2]}; } }
     const b = P(ob.wx, ob.wy, ob.wz);
     let g = `<g class="peao" opacity="${j.eliminado ? .35 : 1}">`;
+    if (eu && S.pisca === "on") g += `<circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="${(K * 1.1).toFixed(1)}" fill="#e24b4a" opacity=".35" stroke="#fff" stroke-width="2"/>`;
     const rx = .34 * K, ry = Math.max(.34 * K * se, 2);
     g += `<ellipse cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" rx="${rx}" ry="${ry.toFixed(1)}" fill="#000" opacity=".4"/>`;
     if (vez) g += `<ellipse cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" rx="${rx + 3}" ry="${(ry + 2).toFixed(1)}" fill="none" stroke="#f2f2f2" stroke-width="1.4" stroke-dasharray="3 2"/>`;
@@ -759,6 +763,17 @@ function irPara(fx, fy, z, dur = 450){
     redesenharMapa(); if (k < 1) requestAnimationFrame(passo);
   };
   requestAnimationFrame(passo);
+}
+/* Na sua vez o mapa não se mexe: o seu peão pisca 5 vezes para você achar. */
+let pisca = null;
+function piscarPeao(){
+  if (pisca) clearInterval(pisca);
+  let n = 0; S.pisca = "off"; redesenharMapa();
+  pisca = setInterval(() => {
+    n++;
+    if (n >= 10 || !S.jogo || S.tela !== "jogo"){ clearInterval(pisca); pisca = null; S.pisca = null; redesenharMapa(); return; }
+    S.pisca = n % 2 ? "on" : "off"; redesenharMapa();
+  }, 260);
 }
 function focarMeuPeao(){ const v = S.jogo, eu = v && v.jogadores.find(j => j.nome === v.voce); if (!eu) return; const [x, y] = posXY(S.sala, eu.posicao); irPara(x, y, 1.7); }
 function verTudo(){ const n = S.sala.tabuleiro.tam; irPara(n / 2, n / 2, 1); }
@@ -909,8 +924,15 @@ function jogo(){
     ${!j.conectado&&!j.saiu&&j.nome!==v.voce?` <button style="min-height:30px;padding:2px 8px;font-size:12px" onclick="enviar({tipo:'remover_desconectado',nome:${JSON.stringify(j.nome).replace(/"/g,"&quot;")}})">remover</button>`:""}</span></div>`).join("")}</div>
   <button class="ghost" style="width:100%" onclick="if(confirm(S.sala.anfitriao===S.nome?'Você é o anfitrião. Sair encerra a partida para todos. Continuar?':'Sair da partida? Você não poderá voltar.'))enviar({tipo:'sair_sala'})">${S.sala.anfitriao===S.nome?"Encerrar a partida":"Sair da partida"}</button>`;
 }
+function seloBlefe(c){
+  const v = S.jogo; if (!v) return "";
+  if ((v.sua_mao || []).includes(c)) return ` <span class="minha">🃏 sua</span>`;
+  if ((v.cartas_publicas || []).includes(c)) return ` <span class="minha vista">👁 pública</span>`;
+  const e = (v.eventos || []).find(x => x.tipo === "carta_revelada" && x.carta === c);
+  return e ? ` <span class="minha vista">👁 vista de ${esc(String(e.jogador).split(" ")[0])}</span>` : "";
+}
 function botaoSel(campo, c){
-  return `<button class="${S.sel[campo]===c?"on":""}" onclick="sel('${campo}',${JSON.stringify(c).replace(/"/g,"&quot;")})">${iconeMarca(c)}${campo==="suspeito"?emojiDe(S.sala,c)+" ":""}${esc(c)}${S.blefe&&((S.jogo&&S.jogo.sua_mao)||[]).includes(c)?` <span class="minha">🃏 sua</span>`:""}</button>`;
+  return `<button class="${S.sel[campo]===c?"on":""}" onclick="sel('${campo}',${JSON.stringify(c).replace(/"/g,"&quot;")})">${iconeMarca(c)}${campo==="suspeito"?emojiDe(S.sala,c)+" ":""}${esc(c)}${S.blefe ? seloBlefe(c) : ""}</button>`;
 }
 function acusacao(){
   const s = S.sala;

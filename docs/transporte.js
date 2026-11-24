@@ -14,6 +14,8 @@
   const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ";
   const sorteio = o.sorteio || (n => { const b = new Uint32Array(1); const lim = Math.floor(4294967296 / n) * n; do { crypto.getRandomValues(b); } while (b[0] >= lim); return b[0] % n; });
   const ONLINE_JUIZ = 75000;
+  const tokenAtual = () => { try { return o.token ? String(o.token() || "") : ""; } catch (e) { return ""; } };
+  const buscar = o.fetch || (typeof fetch === "function" ? (...a) => fetch(...a) : null);
 
   const MAX_SALAS = 3;
   let eu = null, contErro = 0, jaRegistradas = new Set();
@@ -70,7 +72,7 @@
     guardado.apagar("detetive_sala");                     // formato antigo (uma sala só)
   }
   function novaSala(codigo, host) {
-    const s = { codigo, host, juiz: null, entrando: !host, unsubs: [], timers: [], ultimaMudanca: relogio(), juizOffline: false, uids: new Set(), todos: new Set(), cancelaEspera: null };
+    const s = { codigo, host, juiz: null, entrando: !host, unsubs: [], timers: [], ultimaMudanca: relogio(), juizOffline: false, uids: new Set(), todos: new Set(), tokens: new Map(), cancelaEspera: null };
     salas.set(codigo, s); guardarLista();
     return s;
   }
@@ -93,9 +95,19 @@
       ocupado = false;
     };
     return {
-      relogio, enviar: (uid, m) => entregar(codigo, uid, m), salvar, agenda: (f, ms) => agenda.depois(f, ms),
+      relogio, enviar: (uid, m) => entregar(codigo, uid, m), salvar, push: (uids, m) => enviarPush(codigo, uids, m), agenda: (f, ms) => agenda.depois(f, ms),
       aoEncerrar: (motivo, uids) => { const todos = [...new Set([...(s0 ? s0.todos : []), ...(uids || [])])]; agenda.depois(() => nuvem.apagarSala(codigo, todos), 15000); },
     };
+  }
+  /* Avisos "push" (chegam com o app fechado): o juiz pede, e um servidor pequeno entrega pelo FCM. */
+  function enviarPush(codigo, uids, m) {
+    try {
+      const cfg = o.push ? o.push() : null, s = salas.get(codigo);
+      if (!cfg || !cfg.url || !buscar || !s) return;
+      const tokens = [...new Set(uids.map(u => s.tokens.get(u)).filter(Boolean))];
+      if (!tokens.length) return;
+      Promise.resolve(buscar(cfg.url, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ chave: cfg.chave, tokens, tipo: m.tipo, titulo: m.titulo, texto: m.texto }) })).catch(() => {});
+    } catch (e) { /* aviso é um extra: nunca atrapalha o jogo */ }
   }
   function ligarJuiz(codigo, juiz) {
     const s = salas.get(codigo);
@@ -105,7 +117,8 @@
       if (c.msg && c.uid) { s.uids.add(c.uid); s.todos.add(c.uid); juiz.receber(c.uid, c.nome, c.msg); }
       await nuvem.apagarComando(codigo, c.id);
     }));
-    s.unsubs.push(nuvem.escutarPresenca(codigo, (uid, t, primeira) => {
+    s.unsubs.push(nuvem.escutarPresenca(codigo, (uid, t, primeira, token) => {
+      if (token) s.tokens.set(uid, token);
       if (primeira && t != null && relogio() - t > 45000) return;
       juiz.presenca(uid);
     }));
@@ -157,12 +170,12 @@
       s.ultimaMudanca = relogio();
       if (d === null && salas.get(codigo) === s && !s.entrando) entregarLocal(codigo, { tipo: "saiu_da_sala", motivo: "A sala foi encerrada." });
     }));
-    s.timers.push(agenda.cada(() => nuvem.presenca(codigo, eu.uid), 20000));
+    s.timers.push(agenda.cada(() => nuvem.presenca(codigo, eu.uid, tokenAtual()), 20000));
     s.timers.push(agenda.cada(() => {
       const seg = Math.round((relogio() - s.ultimaMudanca) / 1000), off = seg * 1000 > ONLINE_JUIZ;
       if (off !== s.juizOffline || off) { s.juizOffline = off; emitSala(codigo, { tipo: "juiz_offline", offline: off, segundos: off ? seg : 0 }); }
     }, 10000));
-    nuvem.presenca(codigo, eu.uid);
+    nuvem.presenca(codigo, eu.uid, tokenAtual());
   }
   function esperarResposta(s) {
     s.cancelaEspera = agenda.depois(() => {
