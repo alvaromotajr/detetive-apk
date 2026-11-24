@@ -118,7 +118,7 @@
       const sala = this.entradaDe.get(no); if (sala) out.push(sala);
       return out;
     }
-    /* Casas que dá para alcançar em até `passos` passos. Mapa casa -> passos. Casas ocupadas por outros bloqueiam. */
+    /* Casas que dá para alcançar em até `passos` passos. Mapa casa -> passos. Peões não bloqueiam a passagem (quem decide onde pode parar é o jogo). */
     alcancaveis(origem, passos, ocupadas) {
       const dist = new Map([[origem, 0]]); let fila = [origem];
       while (fila.length) {
@@ -127,7 +127,6 @@
           const d = dist.get(n); if (d >= passos) continue;
           for (const v of this.vizinhos(n)) {
             if (dist.has(v)) continue;
-            if (!this.locais.has(v) && ocupadas.has(v)) continue;
             dist.set(v, d + 1);
             if (!this.locais.has(v)) prox.push(v);      // entrar em local encerra o movimento
           }
@@ -200,14 +199,16 @@
     opcoesMovimento(nome) {
       if (this.fase !== Fase.MOVER || nome !== this.jogadorDaVez || !this.dados) return [];
       const origem = this.posicoes[nome];
-      const alcance = this.mapa.alcancaveis(origem, this.restantes, this._ocupadasPorOutros(nome));
+      const alcance = this.mapa.alcancaveis(origem, this.restantes, new Set());
       const proibido = this.ultimoLocal[nome];
-      return [...alcance.keys()].sort().filter(c => !(c === origem && !this.mapa.ehLocal(origem)) && c !== proibido);
+      const ocupadas = this._ocupadasPorOutros(nome);
+      // pode passar por cima de outros peões, mas não parar na mesma casa de rua que eles
+      return [...alcance.keys()].sort().filter(c => !(c === origem && !this.mapa.ehLocal(origem)) && c !== proibido && (this.mapa.ehLocal(c) || !ocupadas.has(c)));
     }
     mover(nome, destino) {
       this._exigir(nome, Fase.MOVER);
       if (!this.opcoesMovimento(nome).includes(destino)) throw new ErroJogo("Você não consegue chegar lá neste turno.");
-      const gasto = this.mapa.alcancaveis(this.posicoes[nome], this.restantes, this._ocupadasPorOutros(nome)).get(destino);
+      const gasto = this.mapa.alcancaveis(this.posicoes[nome], this.restantes, new Set()).get(destino);
       this.posicoes[nome] = destino;
       this.restantes = Math.max(0, this.restantes - (Number.isFinite(gasto) ? gasto : this.restantes));
       this._evento("movimento", { jogador: nome, destino });
@@ -285,6 +286,7 @@
     }
     acusar(nome, suspeito, local, arma) {
       this._exigir(nome, Fase.ROLAR, Fase.MOVER, Fase.PALPITE, Fase.POS_PALPITE);
+      if (!this.mapa.ehLocal(this.posicoes[nome])) throw new ErroJogo("Para acusar, você precisa estar dentro de um local.");
       if (!this.pacote.suspeitos.includes(suspeito)) throw new ErroJogo("Suspeito inválido.");
       if (!this.pacote.locais.includes(local)) throw new ErroJogo("Local inválido.");
       if (!this.pacote.armas.includes(arma)) throw new ErroJogo("Arma inválida.");
@@ -340,6 +342,7 @@
         aguardando_carta_de: this.refutador,
         cartas_que_pode_mostrar: nome === this.refutador ? [...this.opcoesRefutacao] : [],
         opcoes_movimento: this.opcoesMovimento(nome),
+        pode_acusar: this.fase !== Fase.FIM && !this.eliminados.has(nome) && nome === this.jogadorDaVez && this.mapa.ehLocal(this.posicoes[nome]) && [Fase.ROLAR, Fase.MOVER, Fase.PALPITE, Fase.POS_PALPITE].includes(this.fase),
         tem_atalho: this.fase === Fase.ROLAR && nome === this.jogadorDaVez && this.mapa.atalhos.has(this.posicoes[nome]) && this.mapa.atalhos.get(this.posicoes[nome]) !== this.ultimoLocal[nome],
         eventos: this.eventos.filter(e => e.so_para === null || e.so_para === nome),
         vencedor: this.vencedor,

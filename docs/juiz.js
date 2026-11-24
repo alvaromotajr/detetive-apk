@@ -282,7 +282,7 @@
         switch (j.fase) {
           case Fase.REFUTANDO: j.mostrarCarta(nome, sorteia(v.cartas_que_pode_mostrar)); break;
           case Fase.ROLAR: {
-            if (certo) { j.acusar(nome, cs[0], cl[0], ca[0]); break; }
+            if (certo && j.mapa.ehLocal(j.posicoes[nome])) { j.acusar(nome, cs[0], cl[0], ca[0]); break; }
             const aqui = j.posicoes[nome], dest = v.tem_atalho ? j.mapa.atalhos.get(aqui) : null;
             if (dest && cl.includes(dest) && !cl.includes(aqui)) j.usarAtalho(nome); else j.rolarDados(nome);
             break;
@@ -311,7 +311,7 @@
             break;
           }
           case Fase.PALPITE: j.palpitar(nome, sorteia(cs.length ? cs : p.suspeitos), sorteia(ca.length ? ca : p.armas)); break;
-          case Fase.POS_PALPITE: if (certo) j.acusar(nome, cs[0], cl[0], ca[0]); else j.encerrarTurno(nome); break;
+          case Fase.POS_PALPITE: if (certo && j.mapa.ehLocal(j.posicoes[nome])) j.acusar(nome, cs[0], cl[0], ca[0]); else j.encerrarTurno(nome); break;
         }
       } catch (e) {
         if (!(e instanceof ErroJogo)) throw e;

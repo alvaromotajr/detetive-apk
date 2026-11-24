@@ -138,7 +138,7 @@ table.res{width:100%;border-collapse:collapse;font-size:14px}table.res td,table.
 const $app = document.getElementById("app");
 const CORES = ["#e6e6e6","#e24b4a","#c9a93b","#7fb6d9","#8fc98f","#c28fd9","#e8a06a","#9a9a9a"];
 
-const VERSAO_WEB = "0.12.0";
+const VERSAO_WEB = "0.13.0";
 const S = { convite:null, ativa:null, querAbrir:false, fundo:false, cutucada:null, cutucouEm:0, tema:"escuro", juizSeg:0, tela:"login", aba:"entrar", erro:"", iniciando:true, juizOffline:false, conectado:false, nome:null,
   convidado:false, sala:null, jogo:null, caderno:{}, historico:null, cadernoAberto:false,
   atual:null, atualizando:false, pct:null, erroAtual:"", sel:{suspeito:null, arma:null}, acusando:false, acus:{suspeito:null, local:null, arma:null}, ultimoVi:0, vistoN:null, servico:false, vista3d:false, ang:45, elev:32, zoom:1, foco:null, alvo:null, painel:null, chatLido:0, chatVisto:null, som:true, noite:false, fixo:false, blefe:false, lembrando:false, rolando:0, anim:null, prazo:null, tut:null };
@@ -581,7 +581,7 @@ function posXY(s, lugar){
 /* Caminho mais curto (para mostrar antes de confirmar). Só vale para quem está na vez. */
 function caminhoAte(s, v, destino){
   const eu = v.jogadores.find(j => j.nome === v.voce); if (!eu) return [];
-  return caminhoEntre(s, eu.posicao, destino, new Set(v.jogadores.filter(j => j.nome !== v.voce && !j.eliminado).map(j => j.posicao)));
+  return caminhoEntre(s, eu.posicao, destino, new Set());
 }
 function caminhoEntre(s, origem, destino, ocupadas){
   const t = s.tabuleiro;
@@ -633,7 +633,13 @@ function animarPeao(){
 }
 function iniciarRolagem(){
   S.rolando = Date.now() + 1000; const fim = S.rolando;
-  const iv = setInterval(() => { if (Date.now() >= fim){ clearInterval(iv); S.rolando = 0; } desenhar(); }, 100);
+  desenhar();
+  const r = () => 1 + Math.floor(Math.random() * 6);
+  const iv = setInterval(() => {
+    if (Date.now() >= fim){ clearInterval(iv); S.rolando = 0; desenhar(); return; }
+    // só troca as faces dos dados; não redesenha mapa e painel (evita a tela piscar)
+    document.querySelectorAll(".dados.rola").forEach(el => { const sp = el.querySelectorAll("span"); if (sp.length >= 2){ sp[0].innerHTML = faceDado(r()); sp[1].innerHTML = faceDado(r()); } });
+  }, 100);
 }
 
 /* ------------------------------------------ tabuleiro (3D com giro; 2D visto de cima) */
@@ -697,11 +703,10 @@ function tabuleiro(s, v){
   }
   const desenhaPeao = ob => {
     const [j, i] = ob.peao, eu = j.nome === v.voce, vez = j.nome === v.vez_de && v.fase !== "fim";
-    if (eu && S.pisca === "off") return "";                      // piscando: some por um instante
     if (S.anim && S.anim.nome === j.nome) { const q = posicaoAnim(S.anim); if (q) { ob = {...ob, wx: q[0], wy: q[1], wz: q[2]}; } }
     const b = P(ob.wx, ob.wy, ob.wz);
-    let g = `<g class="peao" opacity="${j.eliminado ? .35 : 1}">`;
-    if (eu && S.pisca === "on") g += `<circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="${(K * 1.1).toFixed(1)}" fill="#e24b4a" opacity=".35" stroke="#fff" stroke-width="2"/>`;
+    let g = `<g class="peao${eu ? " eu" : ""}" opacity="${j.eliminado ? .35 : 1}">`;
+    if (eu) g += `<circle class="halo" style="display:none" `+`cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="${(K * 1.1).toFixed(1)}" fill="#e24b4a" opacity=".35" stroke="#fff" stroke-width="2"/>`;
     const rx = .34 * K, ry = Math.max(.34 * K * se, 2);
     g += `<ellipse cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" rx="${rx}" ry="${ry.toFixed(1)}" fill="#000" opacity=".4"/>`;
     if (vez) g += `<ellipse cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" rx="${rx + 3}" ry="${(ry + 2).toFixed(1)}" fill="none" stroke="#f2f2f2" stroke-width="1.4" stroke-dasharray="3 2"/>`;
@@ -768,11 +773,13 @@ function irPara(fx, fy, z, dur = 450){
 let pisca = null;
 function piscarPeao(){
   if (pisca) clearInterval(pisca);
-  let n = 0; S.pisca = "off"; redesenharMapa();
+  let n = 0;
+  const poe = estado => document.querySelectorAll(".peao.eu").forEach(g => { g.style.visibility = estado === "off" ? "hidden" : "visible"; const h = g.querySelector(".halo"); if (h) h.style.display = estado === "on" ? "" : "none"; });
+  poe("off");
   pisca = setInterval(() => {
     n++;
-    if (n >= 10 || !S.jogo || S.tela !== "jogo"){ clearInterval(pisca); pisca = null; S.pisca = null; redesenharMapa(); return; }
-    S.pisca = n % 2 ? "on" : "off"; redesenharMapa();
+    if (n >= 10 || !S.jogo || S.tela !== "jogo"){ clearInterval(pisca); pisca = null; poe("fim"); document.querySelectorAll(".peao.eu .halo").forEach(h => h.style.display = "none"); return; }
+    poe(n % 2 ? "on" : "off");
   }, 260);
 }
 function focarMeuPeao(){ const v = S.jogo, eu = v && v.jogadores.find(j => j.nome === v.voce); if (!eu) return; const [x, y] = posXY(S.sala, eu.posicao); irPara(x, y, 1.7); }
@@ -901,7 +908,7 @@ function jogo(){
   }
   else if (v.fase==="pos_palpite") acao = `${S.lembrando&&euVez?`<div class="lembra">⏰ Não esqueça de encerrar a sua jogada!</div>`:""}<div class="row"><button onclick="enviar({tipo:'encerrar'})" class="main ${S.lembrando&&euVez?"pisca":""}">Encerrar a vez</button></div>`;
 
-  const podeAcusar = euVez && !eliminado && ["rolar","mover","palpite","pos_palpite"].includes(v.fase);
+  const podeAcusar = !!v.pode_acusar;
   const cartas = v.sua_mao.map(c=>`<span class="carta">${esc(c)}</span>`).join("") + v.cartas_publicas.map(c=>`<span class="carta pub" title="pública">${esc(c)}</span>`).join("");
   const log = v.eventos.slice(-30).filter(e=>!(e.tipo==="carta_mostrada"&&e.jogador===v.voce)).map(e=>({t:textoEvento(e),e})).filter(x=>x.t).reverse()
     .map(x=>`<p class="${x.e.tipo==="carta_revelada"||x.e.tipo==="carta_que_mostrei"?"eu":""}">${esc(x.t)}</p>`).join("");
@@ -917,7 +924,7 @@ function jogo(){
   <div class="card">${acao}</div>
   <h2>Suas cartas</h2><div class="cartas">${cartas}</div>
   <div class="row" style="margin-top:12px">${botaoPainel("caderno","📓 Caderno")}${botaoPainel("chat","💬 Chat")}${botaoPainel("palpites","🔎 Palpites")}</div>
-  ${podeAcusar?`<button style="width:100%;margin-top:8px" onclick="S.acusando=!S.acusando;desenhar()">⚖ Acusar</button>`:""}
+  ${podeAcusar?`<button style="width:100%;margin-top:8px" onclick="S.acusando=!S.acusando;desenhar()">⚖ Acusar</button>`:(euVez&&!eliminado&&v.fase!=="refutando"?`<small style="display:block;margin-top:8px;opacity:.7">⚖ Para acusar, entre num local.</small>`:"")}
   ${S.acusando&&podeAcusar?acusacao():""}
   <h2>Pistas e jogadas</h2><div class="card log">${log||"<small>Nada ainda.</small>"}</div>
   <h2>Jogadores</h2>${s.anfitriao===S.nome&&v.jogadores.some(j=>j.bot)?velocidadeBots(s):""}<div class="card">${v.jogadores.map((j,i)=>`<div class="pl"><span><span class="pawn" style="display:inline-block;background:${CORES[i%8]};margin-right:8px">${emojiDe(s, j.personagem)}</span>${esc(j.nome)}<small> · ${esc(j.personagem)}</small>${j.eliminado?'<span class="tag">fora</span>':""}${j.bot?'<span class="tag">bot</span>':""}${!j.conectado&&!j.saiu?'<span class="tag">caiu</span>':""}</span><span>${j.num_cartas} cartas
