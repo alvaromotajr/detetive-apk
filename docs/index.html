@@ -61,7 +61,7 @@ button:disabled{opacity:.4}
 .m-pensar{background:var(--pensar);border-color:#5b8fd9}
 .m-vista{background:var(--vista);border-color:#4f9a52}.m-suspeita{background:var(--susp);border-color:#c9a93b}
 .mapa{margin:10px 0 4px}.tabuleiro{width:100%;height:auto;display:block;border:1px solid var(--p3);border-radius:10px;background:#000}
-.tabuleiro .ir{cursor:pointer;animation:pisca 1.4s ease-in-out infinite}.peao{pointer-events:none}
+.tabuleiro .ir{cursor:pointer}.peao{pointer-events:none}
 @keyframes pisca{50%{opacity:.6}}
 .leg{display:block;text-align:center;margin-bottom:6px}
 .pawn{font-size:13px;line-height:22px}
@@ -138,7 +138,7 @@ table.res{width:100%;border-collapse:collapse;font-size:14px}table.res td,table.
 const $app = document.getElementById("app");
 const CORES = ["#e6e6e6","#e24b4a","#c9a93b","#7fb6d9","#8fc98f","#c28fd9","#e8a06a","#9a9a9a"];
 
-const VERSAO_WEB = "0.13.0";
+const VERSAO_WEB = "0.13.1";
 const S = { convite:null, ativa:null, querAbrir:false, fundo:false, cutucada:null, cutucouEm:0, tema:"escuro", juizSeg:0, tela:"login", aba:"entrar", erro:"", iniciando:true, juizOffline:false, conectado:false, nome:null,
   convidado:false, sala:null, jogo:null, caderno:{}, historico:null, cadernoAberto:false,
   atual:null, atualizando:false, pct:null, erroAtual:"", sel:{suspeito:null, arma:null}, acusando:false, acus:{suspeito:null, local:null, arma:null}, ultimoVi:0, vistoN:null, servico:false, vista3d:false, ang:45, elev:32, zoom:1, foco:null, alvo:null, painel:null, chatLido:0, chatVisto:null, som:true, noite:false, fixo:false, blefe:false, lembrando:false, rolando:0, anim:null, prazo:null, tut:null };
@@ -756,7 +756,27 @@ function alternarNoite(){ S.noite = !S.noite; guardar("detetive_noite", S.noite 
 function alternarVista(){ S.vista3d = !S.vista3d; try { localStorage.setItem("detetive_3d", S.vista3d ? "1" : "0"); } catch(e){} desenhar(); }
 const botaoVista = () => `<div class="vista">${S.vista3d?`<button onclick="alternarFixo()" class="${S.fixo?"main":"ghost"}" aria-label="${S.fixo?"Soltar o mapa":"Fixar o mapa"}">${S.fixo?"🔒":"🔓"}</button>`:""}${S.jogo&&S.tela==="jogo"?`<button onclick="focarMeuPeao()" class="ghost" aria-label="Centralizar no meu peão">🎯</button>`:""}<button onclick="verTudo()" class="ghost" aria-label="Ver o mapa todo">🗺</button>${botaoSom()}<button onclick="alternarNoite()" class="ghost" aria-label="Alternar dia e noite">${S.noite?"☀":"🌙"}</button><button onclick="alternarVista()" class="ghost">${S.vista3d ? "▦ Ver em 2D" : "🧊 Ver em 3D"}</button></div><small class="leg">${S.vista3d?(S.fixo?"Mapa fixo: só aproximar e afastar":"Arraste para girar e inclinar"):"Arraste para mover o mapa"} · pinça para aproximar</small>`;
 function girar(g){ S.ang = (((S.ang == null ? 45 : S.ang) + g) % 360 + 360) % 360; redesenharMapa(); }
-function redesenharMapa(){ document.querySelectorAll("[data-rot]").forEach(el => { el.innerHTML = desenhoTabuleiro(S.sala, S.tela === "jogo" ? S.jogo : null); }); }
+/* Redesenha no máximo ~30 vezes por segundo: arrastar/pinça disparam muitos eventos e o desenho é pesado (causava travamento e tela preta). */
+let _mapaPend = 0, _mapaUlt = 0;
+function _pintarMapa(){ _mapaPend = 0; _mapaUlt = performance.now(); document.querySelectorAll("[data-rot]").forEach(el => { el.innerHTML = desenhoTabuleiro(S.sala, S.tela === "jogo" ? S.jogo : null); }); }
+function redesenharMapa(){
+  if (_mapaPend) return;
+  const espera = Math.max(0, 33 - (performance.now() - _mapaUlt));
+  _mapaPend = requestAnimationFrame(() => { if (espera > 0) { _mapaPend = setTimeout(_pintarMapa, espera); } else _pintarMapa(); });
+}
+/* Inclina o mapa 3D para a vista de cima (como no 2D). */
+let animElev = 0;
+function vistaDeCima(dur = 380){
+  if (!S.vista3d || S.fixo) return;
+  const e0 = S.elev == null ? 32 : S.elev, a0 = S.ang == null ? 45 : S.ang; if (e0 >= 89 && Math.abs(((a0 + 180) % 360) - 180) < 1) return;
+  const da = ((0 - a0 + 540) % 360) - 180, t0 = performance.now(), id = ++animElev;
+  const passo = agora => {
+    if (id !== animElev) return;
+    const k = Math.min(1, (agora - t0) / dur), q = k * k * (3 - 2 * k);
+    S.elev = e0 + (90 - e0) * q; S.ang = (((a0 + da * q) % 360) + 360) % 360; redesenharMapa(); if (k < 1) requestAnimationFrame(passo);
+  };
+  requestAnimationFrame(passo);
+}
 /* Câmera suave até um ponto do tabuleiro. */
 let animCam = 0;
 function irPara(fx, fy, z, dur = 450){
@@ -785,7 +805,7 @@ function piscarPeao(){
 function focarMeuPeao(){ const v = S.jogo, eu = v && v.jogadores.find(j => j.nome === v.voce); if (!eu) return; const [x, y] = posXY(S.sala, eu.posicao); irPara(x, y, 1.7); }
 function verTudo(){ const n = S.sala.tabuleiro.tam; irPara(n / 2, n / 2, 1); }
 /* Toque numa casa: primeiro mostra o caminho; tocar de novo (ou "Confirmar") anda. */
-function tocar(id){ const v = S.jogo, eu = v && v.jogadores.find(j => j.nome === v.voce); if (S.alvo === id || (eu && eu.posicao === id)) { mover(id); return; } S.alvo = id; S.erro = ""; desenhar(); }
+function tocar(id){ const v = S.jogo, eu = v && v.jogadores.find(j => j.nome === v.voce); if (S.alvo === id || (eu && eu.posicao === id)) { mover(id); return; } S.alvo = id; S.erro = ""; desenhar(); vistaDeCima(); }
 
 /* Arrastar o dedo: no 3D gira (lados) e inclina (cima/baixo); no 2D move o mapa. Dois dedos: pinça. */
 let arrasto = null, arrastou = false;
@@ -811,7 +831,7 @@ document.addEventListener("pointermove", e => {
   }
   if (!arrasto) return;
   const dx = e.clientX - arrasto.x, dy = e.clientY - arrasto.y;
-  if (!arrasto.mov && Math.hypot(dx, dy) > 6){ arrasto.mov = true; animCam++; try { arrasto.el.setPointerCapture(arrasto.id); } catch(x){} }
+  if (!arrasto.mov && Math.hypot(dx, dy) > 6){ arrasto.mov = true; animCam++; animElev++; try { arrasto.el.setPointerCapture(arrasto.id); } catch(x){} }
   if (!arrasto.mov) return;
   if (S.vista3d){
     if (S.fixo) return;
